@@ -74,9 +74,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="bitmath.h" />
     <ClInclude Include="board.h" />
     <ClInclude Include="direction.h" />
