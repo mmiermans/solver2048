@@ -1,0 +1,11 @@
+/Debug
+/doc
+/ipch
+/x64
+x64
+Debug
+/*.suo
+/*.sdf
+/*.opensdf
+/Solver2048.sln.GhostDoc.xml
+/Solver2048/*.user

@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Solver2048", "Solver2048\Solver2048.vcxproj", "{F198FFC9-FDD7-4881-9099-C0B8AB938927}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Solver2048UnitTest", "Solver2048UnitTest\Solver2048UnitTest.vcxproj", "{F3F46D27-BCA0-4638-ADC9-D5E8F88CF3A4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F198FFC9-FDD7-4881-9099-C0B8AB938927}.Debug|x64.ActiveCfg = Debug|x64
+		{F198FFC9-FDD7-4881-9099-C0B8AB938927}.Debug|x64.Build.0 = Debug|x64
+		{F198FFC9-FDD7-4881-9099-C0B8AB938927}.Release|x64.ActiveCfg = Release|x64
+		{F198FFC9-FDD7-4881-9099-C0B8AB938927}.Release|x64.Build.0 = Release|x64
+		{F3F46D27-BCA0-4638-ADC9-D5E8F88CF3A4}.Debug|x64.ActiveCfg = Debug|x64
+		{F3F46D27-BCA0-4638-ADC9-D5E8F88CF3A4}.Debug|x64.Build.0 = Debug|x64
+		{F3F46D27-BCA0-4638-ADC9-D5E8F88CF3A4}.Release|x64.ActiveCfg = Release|x64
+		{F3F46D27-BCA0-4638-ADC9-D5E8F88CF3A4}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
