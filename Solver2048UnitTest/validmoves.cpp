@@ -56,7 +56,7 @@ namespace Solver2048UnitTest
 		 //</summary>
 		TEST_METHOD(ValidMovesFromEqualTiles) {
 			Board b;
-
+			// Tile in the upper-left corner
 			for (int i = 1; i <= TILE_MAX; i++) {
 				b.clearBoard();
 				b.setTile(0, 0, i);
@@ -64,6 +64,7 @@ namespace Solver2048UnitTest
 				Assert::AreEqual(b.getValidMoves(), (char)(Move::Left | Move::Right | Move::Down));
 			}
 
+			// Two tiles that lie horizontally next to each other: left and right must be possible.
 			for (int i = 0; i < BOARD_SIZE; i++) {
 				b.clearBoard();
 				b.setTile(BOARD_SIZE-2, i, 1);
@@ -71,13 +72,14 @@ namespace Solver2048UnitTest
 				Assert::IsTrue((b.getValidMoves() & (Move::Right | Move::Left)) == (Move::Right | Move::Left));
 			}
 
+			// Two tiles that lie vertically next to each other: up and down must be possible.
 			for (int i = 0; i < BOARD_SIZE; i++) {
 				b.clearBoard();
 				b.setTile(i, BOARD_SIZE - 2, 1);
 				b.setTile(i, BOARD_SIZE - 1, 1);
 				Assert::IsTrue((b.getValidMoves() & (Move::Down | Move::Up)) == (Move::Down | Move::Up));
 			}
-
+			// All tiles have max value
 			b.clearBoard();
 			for (int x = 0; x < BOARD_SIZE; x++) {
 				for (int y = 0; y < BOARD_SIZE; y++) {
@@ -86,6 +88,16 @@ namespace Solver2048UnitTest
 			}
 			Assert::AreEqual(b.getValidMoves(), (char)(Move::Left | Move::Up | Move::Right | Move::Down));
 
+			// Checkerboard
+			b.clearBoard();
+			for (int x = 0; x < BOARD_SIZE; x++) {
+				for (int y = 0; y < BOARD_SIZE; y++) {
+					b.setTile(x, y, 1 + ((x + y) % 2));
+				}
+			}
+			Assert::AreEqual(b.getValidMoves(), (char)0);
+
+			// Increasing tiles
 			b.clearBoard();
 			for (int x = 0; x < BOARD_SIZE; x++) {
 				for (int y = 0; y < BOARD_SIZE; y++) {

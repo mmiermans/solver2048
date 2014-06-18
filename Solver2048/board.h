@@ -1,8 +1,9 @@
 #pragma once
 
+#include "bitmath.h"
 #include "direction.h"
 
-#define BOARD unsigned __int64
+#define BOARD uint64_t
 #define BOARD_SIZE 4
 #define BOARD_SIZE_SQ (BOARD_SIZE*BOARD_SIZE)
 #define BOARD_MASK (~0)
@@ -32,10 +33,12 @@ public:
 	inline BOARD getBoard() { return board; }
 
 	inline void setTile(int x, int y, TILE val) { int i = getIndex(x, y); board = (board & ~(TILE_MASK << i)) | (val << i); }
+	inline void setTile(int i, TILE val) { board = (board & ~(TILE_MASK << i)) | (val << i); }
 
 	inline int getTile(int x, int y) { int i = getIndex(x, y); return (board & (TILE_MASK << i)) >> i; }
 
 	inline void setBoard(const Board& board) { this->board = board.board; }
+	inline void setBoard(BOARD board) { this->board = board; }
 
 	inline void clearBoard() { board = (BOARD)0; }
 
@@ -47,6 +50,13 @@ public:
 	void moveUp();
 	void moveDown();
 
+	/// <summary>
+	/// Calculates a board that indicates which tiles are empty
+	/// </summary>
+	/// <returns>BOARD with empty tiles equal to TILE_MASK</returns>
+	BOARD getEmptyMask();
+	BOARD getEmptyMask(BOARD b);
+
 private:
 	BOARD board;
 
@@ -57,13 +67,6 @@ private:
 	/// <param name="y">y-coordinate in 0..BOARD_SIZE-1</param>
 	/// <returns>The bit position of a tile, where (0,0) is the top-left corner.</returns>
 	inline int getIndex(int x, int y) { return ((y*BOARD_SIZE) + x)*TILE_BITS; }
-
-	/// <summary>
-	/// Calculates a board that indicates which tiles are empty
-	/// </summary>
-	/// <returns>BOARD with empty tiles equal to TILE_MASK</returns>
-	BOARD getEmptyMask();
-	BOARD getEmptyMask(BOARD b);
 
 	/// <summary>
 	/// Determines whether a board has empty tiles.

@@ -48,7 +48,7 @@ char Board::getValidMoves() {
 	// If left or right are not yet valid, test on equal neighbouring tiles.
 	if ((validMoves & (Move::Left | Move::Right)) != (Move::Left | Move::Right)) {
 		// In eq, tiles with a non-empty equal tile to the right are 0.
-		BOARD eq = e | (board ^ (board >> TILE_BITS));
+		BOARD eq = lastColumnMask() | e | (board ^ (board >> TILE_BITS));
 		if (hasEmptyTile(eq) != 0) {
 			validMoves |= (Move::Left | Move::Right);
 		}
@@ -57,7 +57,7 @@ char Board::getValidMoves() {
 	// If up or down are not yet valid, test on equal neighbouring tiles.
 	if ((validMoves & (Move::Up | Move::Down)) != (Move::Up | Move::Down)) {
 		// In eq, tiles with a non-empty equal tile below are 0.
-		BOARD eq = e | (board ^ (board >> (BOARD_SIZE * TILE_BITS)));
+		BOARD eq = e | (board ^ (board >> ROW_BITS));
 		if (hasEmptyTile(eq) != 0) {
 			validMoves |= (Move::Up | Move::Down);
 		}
