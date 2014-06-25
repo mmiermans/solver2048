@@ -16,7 +16,7 @@ Board::~Board() {
 /// Determines which moves are possible
 /// </summary>
 /// <returns>Bit flags of moves that are possible</returns>
-char Board::getValidMoves() {
+unsigned char Board::getValidMoves() {
 	char validMoves = 0;
 
 	// Board where non-empty tiles are 0 and empty tile bits are high.

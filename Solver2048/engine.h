@@ -2,6 +2,7 @@
 
 #include "board.h"
 #include "direction.h"
+#include "searchnode.h"
 
 class Engine
 {
@@ -9,12 +10,15 @@ public:
 	bool debug = true;
 	int depth = 10;
 
-	Engine(Board board);
+	Engine();
 	~Engine();
 
-	Move solve();
+	Move solve(Board& board);
 
 private:
-	Board board;
+	int evaluateBoard(Board& board);
+	SearchNode* nodes;
+
+	int solveRecursive(int index);
 };
 

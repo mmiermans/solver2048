@@ -17,38 +17,38 @@ namespace Solver2048UnitTest
 		{
 			Board b;
 
-			Assert::AreEqual(b.getValidMoves(), (char)0);
+			Assert::AreEqual(b.getValidMoves(), (unsigned char)0);
 
 			b.setTile(0, 0, 2);
-			Assert::AreEqual(b.getValidMoves(), (char)(Move::Right | Move::Down));
+			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Right | Move::Down));
 
 			b.clearBoard();
 			b.setTile(0, BOARD_SIZE-1, 4);
-			Assert::AreEqual(b.getValidMoves(), (char)(Move::Right | Move::Up));
+			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Right | Move::Up));
 
 			b.clearBoard();
 			b.setTile(BOARD_SIZE-1, 0, 4);
-			Assert::AreEqual(b.getValidMoves(), (char)(Move::Left | Move::Down));
+			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Left | Move::Down));
 
 			b.clearBoard();
 			b.setTile(BOARD_SIZE-1, BOARD_SIZE-1, 1);
-			Assert::AreEqual(b.getValidMoves(), (char)(Move::Left | Move::Up));
+			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Left | Move::Up));
 
 			b.clearBoard();
 			b.setTile(1, 1, 1);
-			Assert::AreEqual(b.getValidMoves(), (char)(Move::Left | Move::Up | Move::Right | Move::Down));
+			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Left | Move::Up | Move::Right | Move::Down));
 
 			b.clearBoard();
 			for (int i = 0; i < BOARD_SIZE; i++) {
 				b.setTile(0, i, i + 1);
 			}
-			Assert::AreEqual(b.getValidMoves(), (char)(Move::Right));
+			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Right));
 
 			b.clearBoard();
 			for (int i = 0; i < BOARD_SIZE; i++) {
 				b.setTile(i, 0, i + 1);
 			}
-			Assert::AreEqual(b.getValidMoves(), (char)(Move::Down));
+			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Down));
 		}
 
 		 //<summary>
@@ -61,7 +61,7 @@ namespace Solver2048UnitTest
 				b.clearBoard();
 				b.setTile(0, 0, i);
 				b.setTile(1, 0, i);
-				Assert::AreEqual(b.getValidMoves(), (char)(Move::Left | Move::Right | Move::Down));
+				Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Left | Move::Right | Move::Down));
 			}
 
 			// Two tiles that lie horizontally next to each other: left and right must be possible.
@@ -86,7 +86,7 @@ namespace Solver2048UnitTest
 					b.setTile(x, y, TILE_MAX);
 				}
 			}
-			Assert::AreEqual(b.getValidMoves(), (char)(Move::Left | Move::Up | Move::Right | Move::Down));
+			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Left | Move::Up | Move::Right | Move::Down));
 
 			// Checkerboard
 			b.clearBoard();
@@ -95,7 +95,7 @@ namespace Solver2048UnitTest
 					b.setTile(x, y, 1 + ((x + y) % 2));
 				}
 			}
-			Assert::AreEqual(b.getValidMoves(), (char)0);
+			Assert::AreEqual(b.getValidMoves(), (unsigned char)0);
 
 			// Increasing tiles
 			b.clearBoard();
@@ -105,7 +105,7 @@ namespace Solver2048UnitTest
 					b.setTile(x, y, v);
 				}
 			}
-			Assert::AreEqual(b.getValidMoves(), (char)0);
+			Assert::AreEqual(b.getValidMoves(), (unsigned char)0);
 		}
 
 	};

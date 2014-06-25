@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\sparsehash">
+      <UniqueIdentifier>{d492332d-5a1f-4bb6-81ab-9ed86f75dc56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\sparsehash\internal">
+      <UniqueIdentifier>{3e64ff73-6ad3-4376-8de7-b959403bbe79}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -33,6 +39,30 @@
     <ClInclude Include="FastRand.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="sparsehash\internal\sparseconfig.h">
+      <Filter>Header Files\sparsehash\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="sparsehash\internal\densehashtable.h">
+      <Filter>Header Files\sparsehash\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="sparsehash\internal\libc_allocator_with_realloc.h">
+      <Filter>Header Files\sparsehash\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="sparsehash\internal\hashtable-common.h">
+      <Filter>Header Files\sparsehash\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="sparsehash\internal\sparsehashtable.h">
+      <Filter>Header Files\sparsehash\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="sparsehash\template_util.h">
+      <Filter>Header Files\sparsehash</Filter>
+    </ClInclude>
+    <ClInclude Include="sparsehash\type_traits.h">
+      <Filter>Header Files\sparsehash</Filter>
+    </ClInclude>
+    <ClInclude Include="searchnode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Solver2048.cpp">
@@ -44,5 +74,25 @@
     <ClCompile Include="engine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="searchnode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sparsehash\dense_hash_set">
+      <Filter>Header Files\sparsehash</Filter>
+    </None>
+    <None Include="sparsehash\dense_hash_map">
+      <Filter>Header Files\sparsehash</Filter>
+    </None>
+    <None Include="sparsehash\sparse_hash_map">
+      <Filter>Header Files\sparsehash</Filter>
+    </None>
+    <None Include="sparsehash\sparse_hash_set">
+      <Filter>Header Files\sparsehash</Filter>
+    </None>
+    <None Include="sparsehash\sparsetable">
+      <Filter>Header Files\sparsehash</Filter>
+    </None>
   </ItemGroup>
 </Project>

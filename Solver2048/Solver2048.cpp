@@ -79,7 +79,7 @@ void initRng(fastrand& fr) {
 
 }
 
-int main(int argc, char* argv[]) {
+void playSimpleStrategy() {
 	fastrand fr;
 	Board b;
 	initRng(fr);
@@ -96,7 +96,6 @@ int main(int argc, char* argv[]) {
 		b.setTile(1, 0, i);
 		b.getValidMoves();
 	}
-
 
 	while (true) {
 
@@ -125,6 +124,9 @@ int main(int argc, char* argv[]) {
 			TILE randomTileValue = (fr.res[1] < 0xe6666666) ? 2 : 4;
 			b.setTile(randomEmptyTilePosition, randomTileValue);
 
+			Engine engine;
+			engine.solve(b);
+
 			// Do move
 			char moves = b.getValidMoves();
 			if (moves & Move::Down) {
@@ -147,14 +149,24 @@ int main(int argc, char* argv[]) {
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			for (int y = 0; y < BOARD_SIZE; y++) {
 				int v = (1 << b.getTile(x, y));
-				if (v > maxTile) {
-					maxTile = v;
-					cout << maxTile << "\t" << attempts << std::endl;
+				if (v == 2048) {
+					printBoard(b);
 				}
 				sum += v;
 			}
 		}
 	}
+}
+
+int main(int argc, char* argv[]) {
+	Board b;
+	b.setTile(0, 1, 7);
+	b.setTile(1, 1, 6);
+	b.setTile(2, 1, 5);
+	b.setTile(3, 1, 4);
+
+	Engine e;
+	e.solve(b);
 
 	return 0;
 }

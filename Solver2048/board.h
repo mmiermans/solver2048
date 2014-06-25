@@ -42,7 +42,7 @@ public:
 
 	inline void clearBoard() { board = (BOARD)0; }
 
-	char getValidMoves();
+	unsigned char getValidMoves();
 
 	void performMove(Move move);
 	void moveLeft();
