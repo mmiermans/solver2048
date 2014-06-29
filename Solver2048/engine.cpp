@@ -1,75 +1,95 @@
 #include <iostream>
 #include <string>
-#include "engine.h"
-#include "searchnode.h"
+#include <stdio.h>
 
 #include <sparsehash/internal/sparseconfig.h>
 #include <sparsehash/dense_hash_set>
 
-#include <stdio.h>
+#include "engine.h"
+#include "searchnode.h"
 
-#define LOOK_AHEAD 3
+#define LOOK_AHEAD 2
 
 Engine::Engine()
 {
+	fastRng = new fastrand;
+	BitMath::initRng(fastRng);
+
+	nodes = new SearchNode[LOOK_AHEAD];
 }
 
 Engine::~Engine()
 {
+	delete fastRng;
+	delete[] nodes;
 }
 
 Move Engine::solve(Board& board) {
-	nodes = new SearchNode[LOOK_AHEAD];
-
-	// Set parentNodes
-	nodes[0].parentBoard = NULL;
-	for (int i = 1; i < LOOK_AHEAD; i++) {
-		nodes[i].parentBoard = &(nodes[i - 1].board);
-	}
-
-	int bestScore = INT_MIN;
+	double bestScore = INT_MIN;
 	Move bestMove = (Move)0;
 
 	// Iterate over valid moves from initial board.
 	unsigned char validMoves = board.getValidMoves();
+	
+	// TEST
+	validMoves = Move::Right | Move::Left;
+
+#if 0
 	for (Move move = Move::Left; move != 0; move = (Move)((unsigned int)move >> 1)) {
 		if ((move & validMoves) != 0) {
+			activeMove = move;
 			// Initialize root search node.
 			Board rootBoard(board);
 			rootBoard.performMove(move);
 			nodes[0].parentBoard = &rootBoard;
-			nodes[0].initialize();
 
-			int score = solveRecursive(0);
+			// Test
+			int eval = evaluateBoard(rootBoard);
+
+			double score = solveRecursive(0);
 			if (bestScore < score) {
 				bestScore = score;
 				bestMove = move;
 			}
 		}
 	}
-
-	delete [] nodes;
+#endif
 
 	return bestMove;
 }
 
-int Engine::solveRecursive(int index) {
+// TEST
+void printMove(Move m) {
+	if (m == Move::Left)
+		std::cout << "L";
+	else if (m == Move::Right)
+		std::cout << "R";
+	else if (m == Move::Up)
+		std::cout << "U";
+	else if (m == Move::Down)
+		std::cout << "D";
+}
+
+double Engine::solveRecursive(int index) {
 	SearchNode& node = nodes[index];
+//	node.initialize();
+
+	//if (node.validMoves == (Move)0) {
+	//	return evaluateBoard(node.board) - (1 << 17);
+	//}
+	double currentScore = 0;
+	double bestScore = INT_MIN;
 	bool hasNext = true;
-
-	int currentScore = 0;
-	int bestScore = INT_MIN;
-	int score;
-
+#if 0
 	do {
 		// Get expected score, either by recursing or from evaluation function.
+		double score;
 		if (index < LOOK_AHEAD - 1) {
-			nodes[index + 1].initialize();
 			score = solveRecursive(index + 1);
 		} else {
 			score = evaluateBoard(node.board);
 		}
-		currentScore += score;
+		currentScore += node.probability * score;
 
 		Move lastMove = node.activeMove;
 		hasNext = node.getNext();
@@ -77,13 +97,24 @@ int Engine::solveRecursive(int index) {
 		// If the move has changed during the getNext() call, then check whether
 		// this is the best move seen so far.
 		if (node.activeMove != lastMove) {
+			if (index <= 0) {
+				printMove(activeMove);
+				for (int i = 0; i < index; i++) {
+					Move m = nodes[i].activeMove;
+					printMove(m);
+				}
+				printMove(lastMove);
+				std::cout << "\t" << currentScore;
+				std::cout << std::endl;
+			}
+
 			if (bestScore < currentScore) {
 				bestScore = currentScore;
 			}
 			currentScore = 0;
 		}
 	} while (hasNext);
-
+#endif
 	return bestScore;
 }
 
@@ -123,7 +154,7 @@ int Engine::evaluateBoard(Board& board) {
 			if (tile == previousTile) {
 				score += (int)tile;
 			} else {
-				score -= (int)tile;
+				score -= ((i >> BOARD_LOG_SIZE) + 1) * (int)tile;
 			}
 			break;
 		}
@@ -131,8 +162,36 @@ int Engine::evaluateBoard(Board& board) {
 
 	for (; i < BOARD_SIZE_SQ; i++) {
 		b >>= TILE_BITS;
-		score -= 1 << (b & TILE_MASK);
+		score -= ((i >> BOARD_LOG_SIZE) + 1) * (1 << (b & TILE_MASK));
+	}
+
+	// Subtract penalty for 'game over' board.
+	if (board.hasEmptyTile(b) == false) {
+		score -= 2048;
 	}
 
 	return score;
+}
+
+void Engine::setRandomTile(Board& board) {
+	// Get random numbers
+	FastRand_SSE(fastRng);
+
+	// Get random empty tile.
+	BOARD emptyMask = board.getEmptyMask();
+	int emptyCount = BitMath::popCount(emptyMask) / TILE_BITS;
+	int randomEmptyTileNumber = fastRng->res[0] % emptyCount;
+	int randomEmptyTilePosition = 0;
+	while (true) {
+		if (emptyMask & (TILE_MASK << randomEmptyTilePosition)) {
+			if (randomEmptyTileNumber-- == 0)
+				break;
+		}
+		randomEmptyTilePosition += TILE_BITS;
+	}
+
+	// Get random tile value with P(2|0.9) and P(4|0.1).
+	// 0xe6666666 = 0.9 * 2^32.
+	TILE randomTileValue = (fastRng->res[1] < 0xe6666666) ? 1 : 2;
+	board.setTile(randomEmptyTilePosition, randomTileValue);
 }

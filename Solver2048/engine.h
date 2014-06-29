@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bitmath.h"
 #include "board.h"
 #include "direction.h"
 #include "searchnode.h"
@@ -15,10 +16,14 @@ public:
 
 	Move solve(Board& board);
 
+	void setRandomTile(Board& board);
+
 private:
+	fastrand* fastRng;
 	int evaluateBoard(Board& board);
 	SearchNode* nodes;
+	Move activeMove;
 
-	int solveRecursive(int index);
+	double solveRecursive(int index);
 };
 

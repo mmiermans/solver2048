@@ -43,6 +43,17 @@ public:
 		b.performMove(Move::Left);
 		Assert::IsTrue(b.getBoard() == result.getBoard());
 
+		// Merge with empty tiles inbetween
+		b.clearBoard();
+		result.clearBoard();
+		for (int i = 0; i < BOARD_SIZE; i++) {
+			b.setTile(0, i, i+1);
+			b.setTile(BOARD_SIZE-1, i, i + 1);
+			result.setTile(0, i, i + 2);
+		}
+		b.performMove(Move::Left);
+		Assert::IsTrue(b.getBoard() == result.getBoard());
+
 		// Merge a full board
 		b.clearBoard();
 		result.clearBoard();
@@ -113,6 +124,17 @@ public:
 			b.setTile(i, 1, 1 + (i % 2));
 		}
 		result.setBoard(b);
+		b.performMove(Move::Right);
+		Assert::IsTrue(b.getBoard() == result.getBoard());
+
+		// Merge with empty tiles inbetween
+		b.clearBoard();
+		result.clearBoard();
+		for (int i = 0; i < BOARD_SIZE; i++) {
+			b.setTile(0, i, i + 1);
+			b.setTile(BOARD_SIZE - 1, i, i + 1);
+			result.setTile(BOARD_SIZE-1, i, i + 2);
+		}
 		b.performMove(Move::Right);
 		Assert::IsTrue(b.getBoard() == result.getBoard());
 
@@ -188,6 +210,17 @@ public:
 		b.performMove(Move::Up);
 		Assert::IsTrue(b.getBoard() == result.getBoard());
 
+		// Merge with empty tiles inbetween
+		b.clearBoard();
+		result.clearBoard();
+		for (int i = 0; i < BOARD_SIZE; i++) {
+			b.setTile(i, 0, i + 1);
+			b.setTile(i, BOARD_SIZE - 1, i + 1);
+			result.setTile(i, 0, i + 2);
+		}
+		b.performMove(Move::Up);
+		Assert::IsTrue(b.getBoard() == result.getBoard());
+
 		// Merge a full board
 		b.clearBoard();
 		result.clearBoard();
@@ -257,6 +290,17 @@ public:
 			b.setTile(1, i, 1 + (i % 2));
 		}
 		result.setBoard(b);
+		b.performMove(Move::Down);
+		Assert::IsTrue(b.getBoard() == result.getBoard());
+
+		// Merge with empty tiles inbetween
+		b.clearBoard();
+		result.clearBoard();
+		for (int i = 0; i < BOARD_SIZE; i++) {
+			b.setTile(i, 0, i + 1);
+			b.setTile(i, BOARD_SIZE - 1, i + 1);
+			result.setTile(i, BOARD_SIZE - 1, i + 2);
+		}
 		b.performMove(Move::Down);
 		Assert::IsTrue(b.getBoard() == result.getBoard());
 

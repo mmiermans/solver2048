@@ -78,6 +78,8 @@
   <ItemGroup>
     <ClInclude Include="bitmath.h" />
     <ClInclude Include="board.h" />
+    <ClInclude Include="boardconstants.h" />
+    <ClInclude Include="ChildNode.h" />
     <ClInclude Include="direction.h" />
     <ClInclude Include="engine.h" />
     <ClInclude Include="FastRand.h" />

@@ -63,6 +63,12 @@
     <ClInclude Include="searchnode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ChildNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="boardconstants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Solver2048.cpp">

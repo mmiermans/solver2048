@@ -1,14 +1,12 @@
 // Solver2048.cpp : Defines the entry point for the console application.
 //
 
-#include <stdlib.h>
-#include <math.h>
 #include <iostream>
 #include <string>
 #include "board.h"
 #include "engine.h"
+#include "searchnode.h"
 #include "bitmath.h"
-#include "FastRand.h"
 
 using namespace std;
 
@@ -44,50 +42,25 @@ void printBoard(Board& board) {
 void askTile(Board& board) {
 	int x = 0;
 	int y = 0;
-	int tile = 0;
+	TILE tile = 0;
 	cout << "Enter <row> <col> <val> (0 0 2 sets top-left to 2): ";
 	cin >> x;
 	cin >> y;
 	cin >> tile;
-	tile = log2(tile);
+	tile = BitMath::log2(tile);
 	board.setTile(x, y, tile);
 }
 
-void initRng(fastrand& fr) {
-	uint32_t prngSeed[8];
-	uint16_t *sptr = (uint16_t *)prngSeed;
-
-	//
-	// Randomize the seed values
-
-	for (uint8_t i = 0; i < 8; i++) {
-		prngSeed[i] = rand();
-	}
-
-	//
-	// Initialize the PRNG
-
-	InitFastRand(sptr[0], sptr[1],
-				 sptr[2], sptr[3],
-				 sptr[4], sptr[5],
-				 sptr[6], sptr[7],
-				 sptr[8], sptr[9],
-				 sptr[10], sptr[11],
-				 sptr[12], sptr[13],
-				 sptr[14], sptr[15],
-				 &fr);
-
-}
-
 void playSimpleStrategy() {
-	fastrand fr;
 	Board b;
-	initRng(fr);
+	Engine e;
 
 	uint64_t totalSum = 0;
 	uint64_t attempts = 0;
 	uint64_t maxTotal = 0;
 	uint64_t maxTile = 0;
+
+	getchar();
 
 	// Tile in the upper-left corner
 	for (int i = 1; i <= TILE_MAX; i++) {
@@ -103,29 +76,7 @@ void playSimpleStrategy() {
 		b.clearBoard();
 
 		while (hasPossibleMove) {
-			// Get random numbers
-			FastRand_SSE(&fr);
-
-			// Get random empty tile.
-			BOARD emptyMask = b.getEmptyMask();
-			int emptyCount = popCount(emptyMask) / TILE_BITS;
-			int randomEmptyTileNumber = fr.res[0] % emptyCount;
-			int randomEmptyTilePosition = 0;
-			while (true) {
-				if (emptyMask & (TILE_MASK << randomEmptyTilePosition)) {
-					if (randomEmptyTileNumber-- == 0)
-						break;
-				}
-				randomEmptyTilePosition += TILE_BITS;
-			}
-
-			// Get random tile value with P(2|0.9) and P(4|0.1).
-			// 0xe6666666 = 0.9 * 2^32.
-			TILE randomTileValue = (fr.res[1] < 0xe6666666) ? 2 : 4;
-			b.setTile(randomEmptyTilePosition, randomTileValue);
-
-			Engine engine;
-			engine.solve(b);
+			e.setRandomTile(b);
 
 			// Do move
 			char moves = b.getValidMoves();
@@ -160,13 +111,76 @@ void playSimpleStrategy() {
 
 int main(int argc, char* argv[]) {
 	Board b;
-	b.setTile(0, 1, 7);
-	b.setTile(1, 1, 6);
-	b.setTile(2, 1, 5);
-	b.setTile(3, 1, 4);
-
 	Engine e;
-	e.solve(b);
+
+	b.setBoard(0x0000000102222355);
+	printBoard(b);
+	SearchNode sn;
+	sn.generateChildren(b);
+
+	cout << endl;
+	for (int i = 0; i < 4; i++) {
+		for (int v = 0; v < 2; v++) {
+			for (int j = 0; j < sn.childCount[i][v]; j++) {
+				ChildNode& childNode = sn.children[i][j][v];
+				BOARD childBoard = childNode.board;
+				Board childBoardClass(childBoard);
+				cout << "Value: " << (1 << (v + 1)) << "\tPositions: " << (int)childNode.positions[0];
+				for (int k = 1; k < 4 && childNode.positions[k] > 0; k++) {
+					cout << ", " << (int)childNode.positions[k];
+				}
+				const char* moveNames[4] = { "Up", "Right", "Down", "Left" };
+				cout << "\tMove: " << moveNames[i] << endl;
+				printBoard(childBoardClass);
+			}
+		}
+	}
+
+	getchar();
+
+	b.setTile(0, 0, 6);
+	b.setTile(0, 1, 4);
+	b.setTile(0, 2, 3);
+	b.setTile(0, 3, 2);
+	b.setTile(1, 0, 4);
+	b.setTile(2, 0, 3);
+	b.setTile(2, 1, 2);
+	b.setTile(2, 2, 1);
+	b.setTile(3, 0, 2);
+	printBoard(b);
+
+	uint64_t totalSum = 0;
+	uint64_t attempts = 0;
+	uint64_t maxTotal = 0;
+	uint64_t maxTile = 0;
+	
+	// Set two random tiles.
+	e.setRandomTile(b);
+	e.setRandomTile(b);
+	printBoard(b);
+
+	while (b.getValidMoves() != (Move)0) {
+		Move bestMove = e.solve(b);
+
+		if (bestMove & Move::Down) {
+			cout << "Down";
+		} else if (bestMove & Move::Left) {
+			cout << "Left";
+		} else if (bestMove & Move::Right) {
+			cout << "Right";
+		} else if (bestMove & Move::Up) {
+			cout << "Up";
+		}
+
+		cout << "\t" << b.getBoard() << endl;
+		b.performMove(bestMove);
+		e.setRandomTile(b);
+
+		cout << b.getBoard() << endl;
+		printBoard(b);
+	}
+
+	getchar();
 
 	return 0;
 }
