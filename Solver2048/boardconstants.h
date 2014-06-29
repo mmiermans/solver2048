@@ -1,15 +1,16 @@
 #pragma once
 
-#define BOARD uint64_t
+typedef uint64_t Board;
+typedef uint64_t Tile;
+
 #define BOARD_SIZE 4
 #define BOARD_SIZE_SQ (BOARD_SIZE*BOARD_SIZE)
 #define BOARD_LOG_SIZE 2
 #define BOARD_MASK (~0)
 
-#define TILE BOARD
 #define TILE_BITS 4
 #define TILE_MAX ((1<<TILE_BITS)-1)
-#define TILE_MASK ((TILE)0xF)
+#define TILE_MASK ((Tile)0xF)
 
 #define ROW_BITS (BOARD_SIZE*TILE_BITS)
 
@@ -47,17 +48,17 @@
 	#define MASK_TILES_LSB     unityMask()
 	#define MASK_TILES_MSB     msbMask()
 
-	static inline BOARD firstColumnMask() { BOARD m = 0; for (int i = 0; i < BOARD_SIZE; i++) m = (m << ROW_BITS) | TILE_MASK; return m; }
-	static inline BOARD notFirstColumnMask() { return (~firstColumnMask()) & BOARD_MASK; }
-	static inline BOARD lastColumnMask() { return (firstColumnMask() << (ROW_BITS - TILE_BITS) & BOARD_MASK); }
-	static inline BOARD notLastColumnMask() { return (~lastColumnMask()) & BOARD_MASK; }
-	static inline BOARD secondColumnMask() { return (firstColumnMask() << TILE_BITS) & BOARD_MASK; }
-	static inline BOARD evenColumnMask() { BOARD m = 0; for (int i = 0; i < BOARD_SIZE_SQ / 2; i++) m = TILE_MASK | (m << (2 * TILE_BITS)); return m; }
-	static inline BOARD oddColumnMask() { return (~evenColumnMask()) & BOARD_MASK; }
-	static inline BOARD firstRowMask() { return ROW_MASK; }
-	static inline BOARD lastRowMask() { return (ROW_MASK << (BOARD_BITS - ROW_BITS)) & BOARD_MASK; }
-	static inline BOARD unityMask() { BOARD m = 0; for (int i = 0; i < BOARD_SIZE_SQ; i++) m = 1 | (m << TILE_BITS); return m; }
-	static inline BOARD msbMask() { return unityMask() << (TILE_BITS - 1); }
+	static inline Board firstColumnMask() { Board m = 0; for (int i = 0; i < BOARD_SIZE; i++) m = (m << ROW_BITS) | TILE_MASK; return m; }
+	static inline Board notFirstColumnMask() { return (~firstColumnMask()) & BOARD_MASK; }
+	static inline Board lastColumnMask() { return (firstColumnMask() << (ROW_BITS - TILE_BITS) & BOARD_MASK); }
+	static inline Board notLastColumnMask() { return (~lastColumnMask()) & BOARD_MASK; }
+	static inline Board secondColumnMask() { return (firstColumnMask() << TILE_BITS) & BOARD_MASK; }
+	static inline Board evenColumnMask() { Board m = 0; for (int i = 0; i < BOARD_SIZE_SQ / 2; i++) m = TILE_MASK | (m << (2 * TILE_BITS)); return m; }
+	static inline Board oddColumnMask() { return (~evenColumnMask()) & BOARD_MASK; }
+	static inline Board firstRowMask() { return ROW_MASK; }
+	static inline Board lastRowMask() { return (ROW_MASK << (BOARD_BITS - ROW_BITS)) & BOARD_MASK; }
+	static inline Board unityMask() { Board m = 0; for (int i = 0; i < BOARD_SIZE_SQ; i++) m = 1 | (m << TILE_BITS); return m; }
+	static inline Board msbMask() { return unityMask() << (TILE_BITS - 1); }
 #endif
 
 #define ROW_MASK           MASK_ROW_FIRST

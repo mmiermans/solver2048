@@ -8,7 +8,7 @@
 /// Class that represents a game board and can perform operations on this board
 /// or get basic information about the board.
 /// </summary>
-class Board
+class BoardLogic
 {
 public:
 	/// <summary>
@@ -19,42 +19,42 @@ public:
 	/// <returns>The bit position of a tile, where (0,0) is the top-left corner.</returns>
 	static inline int getIndex(int x, int y) { return ((y*BOARD_SIZE) + x)*TILE_BITS; }
 
-	static inline void setTile(BOARD& b, int x, int y, TILE val) { int i = getIndex(x, y); b = (b & ~(TILE_MASK << i)) | (val << i); }
-	static inline void setTile(BOARD& b, int i, TILE val) { b = (b & ~(TILE_MASK << i)) | (val << i); }
+	static inline void setTile(Board& b, int x, int y, Tile val) { int i = getIndex(x, y); b = (b & ~(TILE_MASK << i)) | (val << i); }
+	static inline void setTile(Board& b, int i, Tile val) { b = (b & ~(TILE_MASK << i)) | (val << i); }
 
-	static inline TILE getTile(const BOARD b, int x, int y) { int i = getIndex(x, y); return (b & (TILE_MASK << i)) >> i; }
+	static inline Tile getTile(const Board b, int x, int y) { int i = getIndex(x, y); return (b & (TILE_MASK << i)) >> i; }
 
-	static inline void clearBoard(BOARD& b) { b = (BOARD)0; }
+	static inline void clearBoard(Board& b) { b = (Board)0; }
 
-	static unsigned char getValidMoves(BOARD board);
+	static unsigned char getValidMoves(Board board);
 
-	static BOARD performMove(BOARD board, Move move);
+	static Board performMove(Board board, Move move);
 
 	/// <summary>
 	/// Calculates a board that indicates which tiles are empty
 	/// </summary>
-	/// <returns>BOARD with empty tiles equal to TILE_MASK</returns>
-	static BOARD getEmptyMask(BOARD board);
+	/// <returns>Board with empty tiles equal to TILE_MASK</returns>
+	static Board getEmptyMask(Board board);
 
 	/// <summary>
 	/// Determines whether a board has empty tiles.
 	/// </summary>
 	/// <returns>0 if board is contains an empty tile.</returns>
-	static BOARD hasEmptyTile(BOARD b);
+	static Board hasEmptyTile(Board b);
 
 private:
 	/// <summary>
 	/// Helper function for getEmptyMask()
 	/// </summary>
-	static BOARD getEvenColumnsEmptyMask(BOARD b);
+	static Board getEvenColumnsEmptyMask(Board b);
 
-	static BOARD moveLeft(BOARD board);
-	static BOARD moveRight(BOARD board);
-	static BOARD moveUp(BOARD board);
-	static BOARD moveDown(BOARD board);
-	static BOARD shiftLeft(BOARD board);
-	static BOARD shiftRight(BOARD board);
-	static BOARD shiftUp(BOARD board);
-	static BOARD shiftDown(BOARD board);
+	static Board moveLeft(Board board);
+	static Board moveRight(Board board);
+	static Board moveUp(Board board);
+	static Board moveDown(Board board);
+	static Board shiftLeft(Board board);
+	static Board shiftRight(Board board);
+	static Board shiftUp(Board board);
+	static Board shiftDown(Board board);
 };
 

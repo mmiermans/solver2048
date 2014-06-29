@@ -5,17 +5,17 @@
 SearchNode::SearchNode() {
 }
 
-void SearchNode::generateChildren(BOARD b) {
+void SearchNode::generateChildren(Board b) {
 	// Clear child nodes.
 	memset(&childCount, 0, sizeof(childCount));
 
-	BOARD emptyMask = Board::getEmptyMask(b);
+	Board emptyMask = BoardLogic::getEmptyMask(b);
 	int emptyMaskCount = BitMath::popCount(emptyMask) / TILE_BITS;
 	if (emptyMaskCount == 0)
 		return;
 
 	// addLR is a mask of where tiles should be inserted to generate unique boards.
-	BOARD add[2][2];
+	Board add[2][2];
 	unsigned char emptyCounts[2][2 * BOARD_SIZE];
 	int8_t positions[2][2 * BOARD_SIZE][4];
 	int8_t positionFirst[2][2 * BOARD_SIZE];
@@ -78,7 +78,7 @@ void SearchNode::generateChildren(BOARD b) {
 	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
 		Move move = (Move)(1 << moveIndex);
 
-		BOARD mask; // Mask of the current row/column.
+		Board mask; // Mask of the current row/column.
 		int maskShift; // How much to shift the current row column.
 		int d; // dimension index (horizontal = 0, vertical = 1).
 		// This position should be checked to determine whether move is valid.
@@ -108,20 +108,20 @@ void SearchNode::generateChildren(BOARD b) {
 		// Multiple rows/columns in which a tile is inserted are combined in
 		//  one or two calls to performMove() to increase performance.
 		// Indicies: [primary/secondary sequence][tile value]
-		BOARD addAndMove[2][NEW_VALUE_COUNT];
+		Board addAndMove[2][NEW_VALUE_COUNT];
 		for (int i = 0; i < 2; i++) {
-			BOARD addMask = add[d][i];
+			Board addMask = add[d][i];
 			if (addMask) {
 				for (int v = 0; v < NEW_VALUE_COUNT; v++) {
-					BOARD a = b | (((v + MIN_NEW_VALUE) * MASK_TILES_LSB) & addMask);
-					addAndMove[i][v] = Board::performMove(a, move);
+					Board a = b | (((v + MIN_NEW_VALUE) * MASK_TILES_LSB) & addMask);
+					addAndMove[i][v] = BoardLogic::performMove(a, move);
 				}
 			}
 		}
 
 		// Move the board without any added tiles.
-		BOARD baseBoard = Board::performMove(b, move);
-		BOARD baseDiff = b ^ baseBoard;
+		Board baseBoard = BoardLogic::performMove(b, move);
+		Board baseDiff = b ^ baseBoard;
 
 		// Left and right move: loop through rows.
 		// Up and down move: loop through columns.
@@ -136,7 +136,7 @@ void SearchNode::generateChildren(BOARD b) {
 					// Test whether the performed move is valid.
 					if ((baseDiff & ~mask) == 0) {
 						int8_t p = checkPosition[2 * i + j];
-						BOARD bWithCheckTile = (b | ((BOARD)(v + MIN_NEW_VALUE) << (p * TILE_BITS)));
+						Board bWithCheckTile = (b | ((Board)(v + MIN_NEW_VALUE) << (p * TILE_BITS)));
 						if (((bWithCheckTile ^ addAndMove[j][v]) & mask) == 0) {
 							// Nothing changed. If this was the only tile in this sequence,
 							//  then continue, otherwise delete p from the list of positions.
