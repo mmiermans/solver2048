@@ -10,7 +10,7 @@
 
 using namespace std;
 
-void printBoard(Board& board) {
+void printBoard(BOARD board) {
 	char filler = '#';
 	int tileWidth = 7;
 
@@ -26,7 +26,7 @@ void printBoard(Board& board) {
 		cout << filler;
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			cout.width(tileWidth - 2);
-			int logTile = board.getTile(x, y);
+			TILE logTile = Board::getTile(board, x, y);
 			if (logTile > 0)
 				cout << (1 << logTile);
 			else
@@ -39,7 +39,7 @@ void printBoard(Board& board) {
 	cout << outerBorder;
 }
 
-void askTile(Board& board) {
+void askTile(BOARD& board) {
 	int x = 0;
 	int y = 0;
 	TILE tile = 0;
@@ -48,11 +48,11 @@ void askTile(Board& board) {
 	cin >> y;
 	cin >> tile;
 	tile = BitMath::log2(tile);
-	board.setTile(x, y, tile);
+	Board::setTile(board, x, y, tile);
 }
 
 void playSimpleStrategy() {
-	Board b;
+	BOARD b;
 	Engine e;
 
 	uint64_t totalSum = 0;
@@ -60,34 +60,24 @@ void playSimpleStrategy() {
 	uint64_t maxTotal = 0;
 	uint64_t maxTile = 0;
 
-	getchar();
-
-	// Tile in the upper-left corner
-	for (int i = 1; i <= TILE_MAX; i++) {
-		b.clearBoard();
-		b.setTile(0, 0, i);
-		b.setTile(1, 0, i);
-		b.getValidMoves();
-	}
-
 	while (true) {
 
 		bool hasPossibleMove = true;
-		b.clearBoard();
+		Board::clearBoard(b);
 
 		while (hasPossibleMove) {
 			e.setRandomTile(b);
 
 			// Do move
-			char moves = b.getValidMoves();
+			char moves = Board::getValidMoves(b);
 			if (moves & Move::Down) {
-				b.performMove(Move::Down);
+				b = Board::performMove(b, Move::Down);
 			} else if (moves & Move::Left) {
-				b.performMove(Move::Left);
+				b = Board::performMove(b, Move::Left);
 			} else if (moves & Move::Right) {
-				b.performMove(Move::Right);
+				b = Board::performMove(b, Move::Right);
 			} else if (moves & Move::Up) {
-				b.performMove(Move::Up);
+				b = Board::performMove(b, Move::Up);
 			} else {
 				// Game over!
 				hasPossibleMove = false;
@@ -99,7 +89,7 @@ void playSimpleStrategy() {
 		uint64_t sum = 0;
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			for (int y = 0; y < BOARD_SIZE; y++) {
-				int v = (1 << b.getTile(x, y));
+				int v = (1 << Board::getTile(b, x, y));
 				if (v == 2048) {
 					printBoard(b);
 				}
@@ -110,10 +100,10 @@ void playSimpleStrategy() {
 }
 
 int main(int argc, char* argv[]) {
-	Board b;
+	BOARD b;
 	Engine e;
 
-	b.setBoard(0x0000000102222355);
+	b = 0x0000000102222355;
 	printBoard(b);
 	SearchNode sn;
 	sn.generateChildren(b);
@@ -124,29 +114,28 @@ int main(int argc, char* argv[]) {
 			for (int j = 0; j < sn.childCount[i][v]; j++) {
 				ChildNode& childNode = sn.children[i][j][v];
 				BOARD childBoard = childNode.board;
-				Board childBoardClass(childBoard);
 				cout << "Value: " << (1 << (v + 1)) << "\tPositions: " << (int)childNode.positions[0];
 				for (int k = 1; k < 4 && childNode.positions[k] > 0; k++) {
 					cout << ", " << (int)childNode.positions[k];
 				}
 				const char* moveNames[4] = { "Up", "Right", "Down", "Left" };
 				cout << "\tMove: " << moveNames[i] << endl;
-				printBoard(childBoardClass);
+				printBoard(childBoard);
 			}
 		}
 	}
 
 	getchar();
 
-	b.setTile(0, 0, 6);
-	b.setTile(0, 1, 4);
-	b.setTile(0, 2, 3);
-	b.setTile(0, 3, 2);
-	b.setTile(1, 0, 4);
-	b.setTile(2, 0, 3);
-	b.setTile(2, 1, 2);
-	b.setTile(2, 2, 1);
-	b.setTile(3, 0, 2);
+	Board::setTile(b, 0, 0, 6);
+	Board::setTile(b, 0, 1, 4);
+	Board::setTile(b, 0, 2, 3);
+	Board::setTile(b, 0, 3, 2);
+	Board::setTile(b, 1, 0, 4);
+	Board::setTile(b, 2, 0, 3);
+	Board::setTile(b, 2, 1, 2);
+	Board::setTile(b, 2, 2, 1);
+	Board::setTile(b, 3, 0, 2);
 	printBoard(b);
 
 	uint64_t totalSum = 0;
@@ -159,7 +148,7 @@ int main(int argc, char* argv[]) {
 	e.setRandomTile(b);
 	printBoard(b);
 
-	while (b.getValidMoves() != (Move)0) {
+	while (Board::getValidMoves(b) != (Move)0) {
 		Move bestMove = e.solve(b);
 
 		if (bestMove & Move::Down) {
@@ -172,11 +161,11 @@ int main(int argc, char* argv[]) {
 			cout << "Up";
 		}
 
-		cout << "\t" << b.getBoard() << endl;
-		b.performMove(bestMove);
+		cout << "\t" << b << endl;
+		b = Board::performMove(b, bestMove);
 		e.setRandomTile(b);
 
-		cout << b.getBoard() << endl;
+		cout << b << endl;
 		printBoard(b);
 	}
 

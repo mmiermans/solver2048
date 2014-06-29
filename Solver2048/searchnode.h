@@ -21,5 +21,5 @@ public:
 	/// Generates all combinations of a tile insert followed by a move. See 'children'.
 	/// </summary>
 	/// <param name="board">Board before tile insert should take place.</param>
-	void generateChildren(Board& board);
+	void generateChildren(BOARD board);
 };

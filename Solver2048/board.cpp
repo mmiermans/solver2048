@@ -1,29 +1,14 @@
 #include "board.h"
 
-Board::Board() {
-	board = 0;
-}
-
-Board::Board(const Board& board) {
-	setBoard(board);
-}
-
-Board::Board(BOARD board) {
-	this->board = board;
-}
-
-Board::~Board() {
-}
-
 /// <summary>
 /// Determines which moves are possible
 /// </summary>
 /// <returns>Bit flags of moves that are possible</returns>
-unsigned char Board::getValidMoves() {
+unsigned char Board::getValidMoves(BOARD board) {
 	char validMoves = 0;
 
 	// Board where non-empty tiles are 0 and empty tile bits are high.
-	BOARD e = getEmptyMask();
+	BOARD e = getEmptyMask(board);
 
 	// LEFT: check if an empty tile exists left of non-empty tile. Works as follows:
 	//   ~e : Negation converts empty tiles into non-empty tiles
@@ -69,23 +54,24 @@ unsigned char Board::getValidMoves() {
 	return validMoves;
 }
 
-void Board::performMove(Move move) {
+BOARD Board::performMove(BOARD board, Move move) {
 	switch (move) {
-		case Left: moveLeft(); break;
-		case Right: moveRight(); break;
-		case Up: moveUp(); break;
-		case Down: moveDown(); break;
+		case Left: return moveLeft(board);
+		case Right: return moveRight(board);
+		case Up: return moveUp(board);
+		case Down: return moveDown(board);
 	}
+	return (BOARD)board;
 }
 
-void Board::moveLeft() {
-	shiftLeft();
+BOARD Board::moveLeft(BOARD board) {
+	board = shiftLeft(board);
 
 	// Merge columns from left to right.
 	BOARD oldColumns = 0;
 	for (BOARD col = MASK_COL_FIRST; col != MASK_COL_LAST; oldColumns |= col, col <<= TILE_BITS) {
 		// Calculate mask of tiles to merge.
-		BOARD m = getEmptyMask() | (board ^ (board >> TILE_BITS));
+		BOARD m = getEmptyMask(board) | (board ^ (board >> TILE_BITS));
 		// Only continue if the board has mergable tiles.
 		if (hasEmptyTile(m | oldColumns) != 0) {
 			m = getEmptyMask(m) & col;
@@ -98,17 +84,18 @@ void Board::moveLeft() {
 		}
 	}
 
-	shiftLeft();
+	board = shiftLeft(board);
+	return board;
 }
 
-void Board::moveRight() {
-	shiftRight();
+BOARD Board::moveRight(BOARD board) {
+	board = shiftRight(board);
 
 	// Merge columns from right to left.
 	BOARD oldColumns = 0;
 	for (BOARD col = MASK_COL_LAST; col != MASK_COL_FIRST; oldColumns |= col, col >>= TILE_BITS) {
 		// Calculate mask of tiles to merge.
-		BOARD m = getEmptyMask() | (board ^ (board << TILE_BITS));
+		BOARD m = getEmptyMask(board) | (board ^ (board << TILE_BITS));
 		// Only continue if the board has mergable tiles.
 		if (hasEmptyTile(m | oldColumns) != 0) {
 			m = getEmptyMask(m) & col;
@@ -121,17 +108,18 @@ void Board::moveRight() {
 		}
 	}
 
-	shiftRight();
+	board = shiftRight(board);
+	return board;
 }
 
-void Board::moveUp() {
-	shiftUp();
+BOARD Board::moveUp(BOARD board) {
+	board = shiftUp(board);
 
 	// Merge columns from top to bottom.
 	BOARD oldRows = 0;
 	for (BOARD row = MASK_ROW_FIRST; row != MASK_COL_LAST; oldRows |= row, row <<= ROW_BITS) {
 		// Calculate mask of tiles to merge.
-		BOARD m = getEmptyMask() | (board ^ (board >> ROW_BITS));
+		BOARD m = getEmptyMask(board) | (board ^ (board >> ROW_BITS));
 		// Only continue if the board has mergable tiles.
 		if (hasEmptyTile(m | oldRows) != 0) {
 			m = getEmptyMask(m) & row;
@@ -144,17 +132,18 @@ void Board::moveUp() {
 		}
 	}
 
-	shiftUp();
+	board = shiftUp(board);
+	return board;
 }
 
-void Board::moveDown() {
-	shiftDown();
+BOARD Board::moveDown(BOARD board) {
+	board = shiftDown(board);
 
 	// Merge columns from bottom to top.
 	BOARD oldRows = 0;
 	for (BOARD row = MASK_ROW_LAST; row != MASK_COL_FIRST; oldRows |= row, row >>= ROW_BITS) {
 		// Calculate mask of tiles to merge.
-		BOARD m = getEmptyMask() | (board ^ (board << ROW_BITS));
+		BOARD m = getEmptyMask(board) | (board ^ (board << ROW_BITS));
 		// Only continue if the board has mergable tiles.
 		if (hasEmptyTile(m | oldRows) != 0) {
 			m = getEmptyMask(m) & row;
@@ -167,13 +156,14 @@ void Board::moveDown() {
 		}
 	}
 
-	shiftDown();
+	board = shiftDown(board);
+	return board;
 }
 
-void Board::shiftLeft() {
+BOARD Board::shiftLeft(BOARD board) {
 	// Shift tiles to the left.
 	for (int i = 0; i < BOARD_SIZE - 2; i++) {
-		BOARD e = getEmptyMask();
+		BOARD e = getEmptyMask(board);
 		BOARD shiftMask = (~e) & (e << TILE_BITS) & MASK_COL_NOT_FIRST;
 		if (shiftMask != 0) {
 			// Shift an extra column.
@@ -185,12 +175,14 @@ void Board::shiftLeft() {
 			break;
 		}
 	}
+
+	return board;
 }
 
-void Board::shiftRight() {
+BOARD Board::shiftRight(BOARD board) {
 	// Shift tiles to the right.
 	for (int i = 0; i < BOARD_SIZE - 2; i++) {
-		BOARD e = getEmptyMask();
+		BOARD e = getEmptyMask(board);
 		BOARD shiftMask = (~e) & (e >> TILE_BITS) & MASK_COL_NOT_LAST;
 		if (shiftMask != 0) {
 			// Shift an extra column.
@@ -202,12 +194,14 @@ void Board::shiftRight() {
 			break;
 		}
 	}
+
+	return board;
 }
 
-void Board::shiftUp() {
+BOARD Board::shiftUp(BOARD board) {
 	// Shift tiles upward.
 	for (int i = 0; i < BOARD_SIZE - 2; i++) {
-		BOARD e = getEmptyMask();
+		BOARD e = getEmptyMask(board);
 		BOARD shiftMask = (~e) & (e << ROW_BITS) & BOARD_MASK;
 		if (shiftMask != 0) {
 			// Shift an extra row.
@@ -219,12 +213,14 @@ void Board::shiftUp() {
 			break;
 		}
 	}
+
+	return board;
 }
 
-void Board::shiftDown() {
+BOARD Board::shiftDown(BOARD board) {
 	// Shift tiles downward.
 	for (int i = 0; i < BOARD_SIZE - 2; i++) {
-		BOARD e = getEmptyMask();
+		BOARD e = getEmptyMask(board);
 		BOARD shiftMask = (~e) & (e >> ROW_BITS) & BOARD_MASK;
 		if (shiftMask != 0) {
 			// Shift an extra row.
@@ -236,6 +232,8 @@ void Board::shiftDown() {
 			break;
 		}
 	}
+
+	return board;
 }
 
 BOARD Board::getEvenColumnsEmptyMask(BOARD b) {
@@ -246,10 +244,6 @@ BOARD Board::getEvenColumnsEmptyMask(BOARD b) {
 	// Subtracting the carry that is shifted one tile to the right produced the
 	// desired result: empty tiles have high bits.
 	return b - (b >> TILE_BITS);
-}
-
-BOARD Board::getEmptyMask() {
-	return getEmptyMask(board);
 }
 
 BOARD Board::getEmptyMask(BOARD b) {

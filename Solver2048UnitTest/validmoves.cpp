@@ -15,97 +15,97 @@ namespace Solver2048UnitTest
 		/// </summary>
 		TEST_METHOD(ValidMovesFromEmptyTiles)
 		{
-			Board b;
+			BOARD b = 0;
 
-			Assert::AreEqual(b.getValidMoves(), (unsigned char)0);
+			Assert::AreEqual(Board::getValidMoves(b), (unsigned char)0);
 
-			b.setTile(0, 0, 2);
-			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Right | Move::Down));
+			Board::setTile(b, 0, 0, 2);
+			Assert::AreEqual(Board::getValidMoves(b), (unsigned char)(Move::Right | Move::Down));
 
-			b.clearBoard();
-			b.setTile(0, BOARD_SIZE-1, 4);
-			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Right | Move::Up));
+			Board::clearBoard(b);
+			Board::setTile(b, 0, BOARD_SIZE-1, 4);
+			Assert::AreEqual(Board::getValidMoves(b), (unsigned char)(Move::Right | Move::Up));
 
-			b.clearBoard();
-			b.setTile(BOARD_SIZE-1, 0, 4);
-			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Left | Move::Down));
+			Board::clearBoard(b);
+			Board::setTile(b, BOARD_SIZE-1, 0, 4);
+			Assert::AreEqual(Board::getValidMoves(b), (unsigned char)(Move::Left | Move::Down));
 
-			b.clearBoard();
-			b.setTile(BOARD_SIZE-1, BOARD_SIZE-1, 1);
-			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Left | Move::Up));
+			Board::clearBoard(b);
+			Board::setTile(b, BOARD_SIZE-1, BOARD_SIZE-1, 1);
+			Assert::AreEqual(Board::getValidMoves(b), (unsigned char)(Move::Left | Move::Up));
 
-			b.clearBoard();
-			b.setTile(1, 1, 1);
-			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Left | Move::Up | Move::Right | Move::Down));
+			Board::clearBoard(b);
+			Board::setTile(b, 1, 1, 1);
+			Assert::AreEqual(Board::getValidMoves(b), (unsigned char)(Move::Left | Move::Up | Move::Right | Move::Down));
 
-			b.clearBoard();
+			Board::clearBoard(b);
 			for (int i = 0; i < BOARD_SIZE; i++) {
-				b.setTile(0, i, i + 1);
+				Board::setTile(b, 0, i, i + 1);
 			}
-			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Right));
+			Assert::AreEqual(Board::getValidMoves(b), (unsigned char)(Move::Right));
 
-			b.clearBoard();
+			Board::clearBoard(b);
 			for (int i = 0; i < BOARD_SIZE; i++) {
-				b.setTile(i, 0, i + 1);
+				Board::setTile(b, i, 0, i + 1);
 			}
-			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Down));
+			Assert::AreEqual(Board::getValidMoves(b), (unsigned char)(Move::Down));
 		}
 
 		 //<summary>
 		 //Tests whether valid moves exist due to neighboring tiles.
 		 //</summary>
 		TEST_METHOD(ValidMovesFromEqualTiles) {
-			Board b;
+			BOARD b;
 			// Tile in the upper-left corner
 			for (int i = 1; i <= TILE_MAX; i++) {
-				b.clearBoard();
-				b.setTile(0, 0, i);
-				b.setTile(1, 0, i);
-				Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Left | Move::Right | Move::Down));
+				Board::clearBoard(b);
+				Board::setTile(b, 0, 0, i);
+				Board::setTile(b, 1, 0, i);
+				Assert::AreEqual(Board::getValidMoves(b), (unsigned char)(Move::Left | Move::Right | Move::Down));
 			}
 
 			// Two tiles that lie horizontally next to each other: left and right must be possible.
 			for (int i = 0; i < BOARD_SIZE; i++) {
-				b.clearBoard();
-				b.setTile(BOARD_SIZE-2, i, 1);
-				b.setTile(BOARD_SIZE-1, i, 1);
-				Assert::IsTrue((b.getValidMoves() & (Move::Right | Move::Left)) == (Move::Right | Move::Left));
+				Board::clearBoard(b);
+				Board::setTile(b, BOARD_SIZE-2, i, 1);
+				Board::setTile(b, BOARD_SIZE-1, i, 1);
+				Assert::IsTrue((Board::getValidMoves(b) & (Move::Right | Move::Left)) == (Move::Right | Move::Left));
 			}
 
 			// Two tiles that lie vertically next to each other: up and down must be possible.
 			for (int i = 0; i < BOARD_SIZE; i++) {
-				b.clearBoard();
-				b.setTile(i, BOARD_SIZE - 2, 1);
-				b.setTile(i, BOARD_SIZE - 1, 1);
-				Assert::IsTrue((b.getValidMoves() & (Move::Down | Move::Up)) == (Move::Down | Move::Up));
+				Board::clearBoard(b);
+				Board::setTile(b, i, BOARD_SIZE - 2, 1);
+				Board::setTile(b, i, BOARD_SIZE - 1, 1);
+				Assert::IsTrue((Board::getValidMoves(b) & (Move::Down | Move::Up)) == (Move::Down | Move::Up));
 			}
 			// All tiles have max value
-			b.clearBoard();
+			Board::clearBoard(b);
 			for (int x = 0; x < BOARD_SIZE; x++) {
 				for (int y = 0; y < BOARD_SIZE; y++) {
-					b.setTile(x, y, TILE_MAX);
+					Board::setTile(b, x, y, TILE_MAX);
 				}
 			}
-			Assert::AreEqual(b.getValidMoves(), (unsigned char)(Move::Left | Move::Up | Move::Right | Move::Down));
+			Assert::AreEqual(Board::getValidMoves(b), (unsigned char)(Move::Left | Move::Up | Move::Right | Move::Down));
 
 			// Checkerboard
-			b.clearBoard();
+			Board::clearBoard(b);
 			for (int x = 0; x < BOARD_SIZE; x++) {
 				for (int y = 0; y < BOARD_SIZE; y++) {
-					b.setTile(x, y, 1 + ((x + y) % 2));
+					Board::setTile(b, x, y, 1 + ((x + y) % 2));
 				}
 			}
-			Assert::AreEqual(b.getValidMoves(), (unsigned char)0);
+			Assert::AreEqual(Board::getValidMoves(b), (unsigned char)0);
 
 			// Increasing tiles
-			b.clearBoard();
+			Board::clearBoard(b);
 			for (int x = 0; x < BOARD_SIZE; x++) {
 				for (int y = 0; y < BOARD_SIZE; y++) {
 					BOARD v = 1 + ((x + (y*BOARD_SIZE)) % TILE_MAX);
-					b.setTile(x, y, v);
+					Board::setTile(b, x, y, v);
 				}
 			}
-			Assert::AreEqual(b.getValidMoves(), (unsigned char)0);
+			Assert::AreEqual(Board::getValidMoves(b), (unsigned char)0);
 		}
 
 	};

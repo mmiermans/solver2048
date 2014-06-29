@@ -5,13 +5,11 @@
 SearchNode::SearchNode() {
 }
 
-void SearchNode::generateChildren(Board& board) {
-	BOARD b = board.getBoard();
-
+void SearchNode::generateChildren(BOARD b) {
 	// Clear child nodes.
 	memset(&childCount, 0, sizeof(childCount));
 
-	BOARD emptyMask = board.getEmptyMask();
+	BOARD emptyMask = Board::getEmptyMask(b);
 	int emptyMaskCount = BitMath::popCount(emptyMask) / TILE_BITS;
 	if (emptyMaskCount == 0)
 		return;
@@ -85,7 +83,6 @@ void SearchNode::generateChildren(Board& board) {
 		int d; // dimension index (horizontal = 0, vertical = 1).
 		// This position should be checked to determine whether move is valid.
 		int8_t* checkPosition;
-		bool checkDeleteFirst;
 
 		if (move & (Move::Left | Move::Right)) {
 			d = 0;
@@ -111,24 +108,19 @@ void SearchNode::generateChildren(Board& board) {
 		// Multiple rows/columns in which a tile is inserted are combined in
 		//  one or two calls to performMove() to increase performance.
 		// Indicies: [primary/secondary sequence][tile value]
-		Board addAndMove[2][NEW_VALUE_COUNT];
-		BOARD addBefore[2][NEW_VALUE_COUNT];
+		BOARD addAndMove[2][NEW_VALUE_COUNT];
 		for (int i = 0; i < 2; i++) {
 			BOARD addMask = add[d][i];
 			if (addMask) {
 				for (int v = 0; v < NEW_VALUE_COUNT; v++) {
-					Board& a = addAndMove[i][v];
-					addBefore[i][v] = b | (((v + MIN_NEW_VALUE) * MASK_TILES_LSB) & addMask);
-					a.setBoard(addBefore[i][v]);
-					a.performMove(move);
+					BOARD a = b | (((v + MIN_NEW_VALUE) * MASK_TILES_LSB) & addMask);
+					addAndMove[i][v] = Board::performMove(a, move);
 				}
 			}
 		}
 
 		// Move the board without any added tiles.
-		Board baseMove(b);
-		baseMove.performMove(move);
-		BOARD baseBoard = baseMove.getBoard();
+		BOARD baseBoard = Board::performMove(b, move);
 		BOARD baseDiff = b ^ baseBoard;
 
 		// Left and right move: loop through rows.
@@ -145,7 +137,7 @@ void SearchNode::generateChildren(Board& board) {
 					if ((baseDiff & ~mask) == 0) {
 						int8_t p = checkPosition[2 * i + j];
 						BOARD bWithCheckTile = (b | ((BOARD)(v + MIN_NEW_VALUE) << (p * TILE_BITS)));
-						if (((bWithCheckTile ^ addAndMove[j][v].getBoard()) & mask) == 0) {
+						if (((bWithCheckTile ^ addAndMove[j][v]) & mask) == 0) {
 							// Nothing changed. If this was the only tile in this sequence,
 							//  then continue, otherwise delete p from the list of positions.
 							if (currentPositions[1] == -1) {
@@ -165,7 +157,7 @@ void SearchNode::generateChildren(Board& board) {
 					int count = childCount[moveIndex][v]++;
 					ChildNode& childNode = children[moveIndex][count][v];
 					// Combine two boards, one with an inserted tiles and one without.
-					childNode.board = (baseBoard & ~mask) | (mask & addAndMove[j][v].getBoard());
+					childNode.board = (baseBoard & ~mask) | (mask & addAndMove[j][v]);
 					// Copy all four positions in one go.
 					*((uint32_t*)childNode.positions) = *((uint32_t*)currentPositions);
 				}

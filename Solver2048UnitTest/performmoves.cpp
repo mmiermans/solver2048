@@ -12,82 +12,82 @@ public:
 	/// Test performing a left move.
 	/// </summary>
 	TEST_METHOD(PerformMoveLeft) {
-		Board b;
-		Board result;
+		BOARD b = 0;
+		BOARD result = 0;
 
-		b.performMove(Move::Left);
-		Assert::IsTrue(b.getBoard() == (BOARD)0);
+		b = Board::performMove(b, Move::Left);
+		Assert::IsTrue(b == (BOARD)0);
 
 		// Merge upper-left tile (nothing to do)
-		b.clearBoard();
-		b.setTile(0, 0, 2);
-		result.setBoard(b);
-		b.performMove(Move::Left);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		Board::clearBoard(b);
+		Board::setTile(b, 0, 0, 2);
+		result = b;
+		b = Board::performMove(b, Move::Left);
+		Assert::IsTrue(b == result);
 
 		// Merge left column (nothing to do)
-		b.clearBoard();
+		Board::clearBoard(b);
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			b.setTile(0, i, 2);
+			Board::setTile(b, 0, i, 2);
 		}
-		result.setBoard(b);
-		b.performMove(Move::Left);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		result = b;
+		b = Board::performMove(b, Move::Left);
+		Assert::IsTrue(b == result);
 
 		// Merge row 1212 (nothing to do)
-		b.clearBoard();
+		Board::clearBoard(b);
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			b.setTile(i, 1, 1 + (i % 2));
+			Board::setTile(b, i, 1, 1 + (i % 2));
 		}
-		result.setBoard(b);
-		b.performMove(Move::Left);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		result = b;
+		b = Board::performMove(b, Move::Left);
+		Assert::IsTrue(b == result);
 
 		// Merge with empty tiles inbetween
-		b.clearBoard();
-		result.clearBoard();
+		Board::clearBoard(b);
+		Board::clearBoard(result);
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			b.setTile(0, i, i+1);
-			b.setTile(BOARD_SIZE-1, i, i + 1);
-			result.setTile(0, i, i + 2);
+			Board::setTile(b, 0, i, i+1);
+			Board::setTile(b, BOARD_SIZE-1, i, i + 1);
+			Board::setTile(result, 0, i, i + 2);
 		}
-		b.performMove(Move::Left);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		b = Board::performMove(b, Move::Left);
+		Assert::IsTrue(b == result);
 
 		// Merge a full board
-		b.clearBoard();
-		result.clearBoard();
+		Board::clearBoard(b);
+		Board::clearBoard(result);
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			for (int y = 0; y < BOARD_SIZE; y++) {
-				b.setTile(x, y, TILE_MAX-1);
+				Board::setTile(b, x, y, TILE_MAX-1);
 				if (x < BOARD_SIZE / 2) {
-					result.setTile(x, y, TILE_MAX);
+					Board::setTile(result, x, y, TILE_MAX);
 				}
 			}
 		}
-		b.performMove(Move::Left);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		b = Board::performMove(b, Move::Left);
+		Assert::IsTrue(b == result);
 
 #if BOARD_SIZE == 4
 		// Merge board where each row contains one less tile.
-		b.clearBoard();
-		result.clearBoard();
+		Board::clearBoard(b);
+		Board::clearBoard(result);
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			for (int y = 0; y < BOARD_SIZE; y++) {
 				if (x >= y) {
-					b.setTile(x, y, 1);
+					Board::setTile(b, x, y, 1);
 				}
 			}
 		}
-		result.setTile(0, 0, 2);
-		result.setTile(1, 0, 2);
-		result.setTile(0, 1, 2);
-		result.setTile(1, 1, 1);
-		result.setTile(0, 2, 2);
-		result.setTile(1, 2, 0);
-		result.setTile(0, 3, 1);
-		b.performMove(Move::Left);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		Board::setTile(result, 0, 0, 2);
+		Board::setTile(result, 1, 0, 2);
+		Board::setTile(result, 0, 1, 2);
+		Board::setTile(result, 1, 1, 1);
+		Board::setTile(result, 0, 2, 2);
+		Board::setTile(result, 1, 2, 0);
+		Board::setTile(result, 0, 3, 1);
+		b = Board::performMove(b, Move::Left);
+		Assert::IsTrue(b == result);
 #endif
 
 	}
@@ -96,82 +96,82 @@ public:
 	/// Test performing a right move.
 	/// </summary>
 	TEST_METHOD(PerformMoveRight) {
-		Board b;
-		Board result;
+		BOARD b = 0;
+		BOARD result = 0;
 
-		b.performMove(Move::Right);
-		Assert::IsTrue(b.getBoard() == (BOARD)0);
+		b = Board::performMove(b, Move::Right);
+		Assert::IsTrue(b == (BOARD)0);
 
 		// Merge upper-right tile (nothing to do)
-		b.clearBoard();
-		b.setTile(BOARD_SIZE-1, 0, 2);
-		result.setBoard(b);
-		b.performMove(Move::Right);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		Board::clearBoard(b);
+		Board::setTile(b, BOARD_SIZE-1, 0, 2);
+		result = b;
+		b = Board::performMove(b, Move::Right);
+		Assert::IsTrue(b == result);
 
 		// Merge right column (nothing to do)
-		b.clearBoard();
+		Board::clearBoard(b);
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			b.setTile(BOARD_SIZE-1, i, 2);
+			Board::setTile(b, BOARD_SIZE-1, i, 2);
 		}
-		result.setBoard(b);
-		b.performMove(Move::Right);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		result = b;
+		b = Board::performMove(b, Move::Right);
+		Assert::IsTrue(b == result);
 
 		// Merge row 1212 (nothing to do)
-		b.clearBoard();
+		Board::clearBoard(b);
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			b.setTile(i, 1, 1 + (i % 2));
+			Board::setTile(b, i, 1, 1 + (i % 2));
 		}
-		result.setBoard(b);
-		b.performMove(Move::Right);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		result = b;
+		b = Board::performMove(b, Move::Right);
+		Assert::IsTrue(b == result);
 
 		// Merge with empty tiles inbetween
-		b.clearBoard();
-		result.clearBoard();
+		Board::clearBoard(b);
+		Board::clearBoard(result);
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			b.setTile(0, i, i + 1);
-			b.setTile(BOARD_SIZE - 1, i, i + 1);
-			result.setTile(BOARD_SIZE-1, i, i + 2);
+			Board::setTile(b, 0, i, i + 1);
+			Board::setTile(b, BOARD_SIZE - 1, i, i + 1);
+			Board::setTile(result, BOARD_SIZE-1, i, i + 2);
 		}
-		b.performMove(Move::Right);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		b = Board::performMove(b, Move::Right);
+		Assert::IsTrue(b == result);
 
 		// Merge a full board
-		b.clearBoard();
-		result.clearBoard();
+		Board::clearBoard(b);
+		Board::clearBoard(result);
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			for (int y = 0; y < BOARD_SIZE; y++) {
-				b.setTile(x, y, TILE_MAX - 1);
+				Board::setTile(b, x, y, TILE_MAX - 1);
 				if (x >= BOARD_SIZE / 2) {
-					result.setTile(x, y, TILE_MAX);
+					Board::setTile(result, x, y, TILE_MAX);
 				}
 			}
 		}
-		b.performMove(Move::Right);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		b = Board::performMove(b, Move::Right);
+		Assert::IsTrue(b == result);
 
 #if BOARD_SIZE == 4
 		// Merge board where each row contains one less tile.
-		b.clearBoard();
-		result.clearBoard();
+		Board::clearBoard(b);
+		Board::clearBoard(result);
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			for (int y = 0; y < BOARD_SIZE; y++) {
 				if (x <= y) {
-					b.setTile(x, y, 1);
+					Board::setTile(b, x, y, 1);
 				}
 			}
 		}
-		result.setTile(3, 0, 1);
-		result.setTile(2, 1, 0);
-		result.setTile(3, 1, 2);
-		result.setTile(2, 2, 1);
-		result.setTile(3, 2, 2);
-		result.setTile(2, 3, 2);
-		result.setTile(3, 3, 2);
-		b.performMove(Move::Right);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		Board::setTile(result, 3, 0, 1);
+		Board::setTile(result, 2, 1, 0);
+		Board::setTile(result, 3, 1, 2);
+		Board::setTile(result, 2, 2, 1);
+		Board::setTile(result, 3, 2, 2);
+		Board::setTile(result, 2, 3, 2);
+		Board::setTile(result, 3, 3, 2);
+		b = Board::performMove(b, Move::Right);
+		Assert::IsTrue(b == result);
 #endif
 	}
 
@@ -179,82 +179,82 @@ public:
 	/// Test performing an upward move.
 	/// </summary>
 	TEST_METHOD(PerformMoveUp) {
-		Board b;
-		Board result;
+		BOARD b = 0;
+		BOARD result = 0;
 
-		b.performMove(Move::Up);
-		Assert::IsTrue(b.getBoard() == (BOARD)0);
+		b = Board::performMove(b, Move::Up);
+		Assert::IsTrue(b == (BOARD)0);
 
 		// Merge upper-left tile (nothing to do)
-		b.clearBoard();
-		b.setTile(0, 0, 2);
-		result.setBoard(b);
-		b.performMove(Move::Up);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		Board::clearBoard(b);
+		Board::setTile(b, 0, 0, 2);
+		result = b;
+		b = Board::performMove(b, Move::Up);
+		Assert::IsTrue(b == result);
 
 		// Merge first row (nothing to do)
-		b.clearBoard();
+		Board::clearBoard(b);
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			b.setTile(i, 0, 2);
+			Board::setTile(b, i, 0, 2);
 		}
-		result.setBoard(b);
-		b.performMove(Move::Up);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		result = b;
+		b = Board::performMove(b, Move::Up);
+		Assert::IsTrue(b == result);
 
 		// Merge column 1212 (nothing to do)
-		b.clearBoard();
+		Board::clearBoard(b);
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			b.setTile(1, i, 1 + (i % 2));
+			Board::setTile(b, 1, i, 1 + (i % 2));
 		}
-		result.setBoard(b);
-		b.performMove(Move::Up);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		result = b;
+		b = Board::performMove(b, Move::Up);
+		Assert::IsTrue(b == result);
 
 		// Merge with empty tiles inbetween
-		b.clearBoard();
-		result.clearBoard();
+		Board::clearBoard(b);
+		Board::clearBoard(result);
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			b.setTile(i, 0, i + 1);
-			b.setTile(i, BOARD_SIZE - 1, i + 1);
-			result.setTile(i, 0, i + 2);
+			Board::setTile(b, i, 0, i + 1);
+			Board::setTile(b, i, BOARD_SIZE - 1, i + 1);
+			Board::setTile(result, i, 0, i + 2);
 		}
-		b.performMove(Move::Up);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		b = Board::performMove(b, Move::Up);
+		Assert::IsTrue(b == result);
 
 		// Merge a full board
-		b.clearBoard();
-		result.clearBoard();
+		Board::clearBoard(b);
+		Board::clearBoard(result);
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			for (int y = 0; y < BOARD_SIZE; y++) {
-				b.setTile(x, y, TILE_MAX - 1);
+				Board::setTile(b, x, y, TILE_MAX - 1);
 				if (y < BOARD_SIZE / 2) {
-					result.setTile(x, y, TILE_MAX);
+					Board::setTile(result, x, y, TILE_MAX);
 				}
 			}
 		}
-		b.performMove(Move::Up);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		b = Board::performMove(b, Move::Up);
+		Assert::IsTrue(b == result);
 
 #if BOARD_SIZE == 4
 		// Merge board where each row contains one less tile.
-		b.clearBoard();
-		result.clearBoard();
+		Board::clearBoard(b);
+		Board::clearBoard(result);
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			for (int y = 0; y < BOARD_SIZE; y++) {
 				if (x <= y) {
-					b.setTile(x, y, 1);
+					Board::setTile(b, x, y, 1);
 				}
 			}
 		}
-		result.setTile(3, 0, 1);
-		result.setTile(2, 0, 2);
-		result.setTile(2, 1, 0);
-		result.setTile(1, 0, 2);
-		result.setTile(1, 1, 1);
-		result.setTile(0, 0, 2);
-		result.setTile(0, 1, 2);
-		b.performMove(Move::Up);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		Board::setTile(result, 3, 0, 1);
+		Board::setTile(result, 2, 0, 2);
+		Board::setTile(result, 2, 1, 0);
+		Board::setTile(result, 1, 0, 2);
+		Board::setTile(result, 1, 1, 1);
+		Board::setTile(result, 0, 0, 2);
+		Board::setTile(result, 0, 1, 2);
+		b = Board::performMove(b, Move::Up);
+		Assert::IsTrue(b == result);
 #endif
 	}
 
@@ -262,82 +262,82 @@ public:
 	/// Test performing an downward move.
 	/// </summary>
 	TEST_METHOD(PerformMoveDown) {
-		Board b;
-		Board result;
+		BOARD b = 0;
+		BOARD result = 0;
 
-		b.performMove(Move::Down);
-		Assert::IsTrue(b.getBoard() == (BOARD)0);
+		b = Board::performMove(b, Move::Down);
+		Assert::IsTrue(b == (BOARD)0);
 
 		// Merge lower-left tile (nothing to do)
-		b.clearBoard();
-		b.setTile(0, BOARD_SIZE-1, 2);
-		result.setBoard(b);
-		b.performMove(Move::Down);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		Board::clearBoard(b);
+		Board::setTile(b, 0, BOARD_SIZE-1, 2);
+		result = b;
+		b = Board::performMove(b, Move::Down);
+		Assert::IsTrue(b == result);
 
 		// Merge last row (nothing to do)
-		b.clearBoard();
+		Board::clearBoard(b);
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			b.setTile(i, BOARD_SIZE-1, 2);
+			Board::setTile(b, i, BOARD_SIZE-1, 2);
 		}
-		result.setBoard(b);
-		b.performMove(Move::Down);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		result = b;
+		b = Board::performMove(b, Move::Down);
+		Assert::IsTrue(b == result);
 
 		// Merge column 1212 (nothing to do)
-		b.clearBoard();
+		Board::clearBoard(b);
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			b.setTile(1, i, 1 + (i % 2));
+			Board::setTile(b, 1, i, 1 + (i % 2));
 		}
-		result.setBoard(b);
-		b.performMove(Move::Down);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		result = b;
+		b = Board::performMove(b, Move::Down);
+		Assert::IsTrue(b == result);
 
 		// Merge with empty tiles inbetween
-		b.clearBoard();
-		result.clearBoard();
+		Board::clearBoard(b);
+		Board::clearBoard(result);
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			b.setTile(i, 0, i + 1);
-			b.setTile(i, BOARD_SIZE - 1, i + 1);
-			result.setTile(i, BOARD_SIZE - 1, i + 2);
+			Board::setTile(b, i, 0, i + 1);
+			Board::setTile(b, i, BOARD_SIZE - 1, i + 1);
+			Board::setTile(result, i, BOARD_SIZE - 1, i + 2);
 		}
-		b.performMove(Move::Down);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		b = Board::performMove(b, Move::Down);
+		Assert::IsTrue(b == result);
 
 		// Merge a full board
-		b.clearBoard();
-		result.clearBoard();
+		Board::clearBoard(b);
+		Board::clearBoard(result);
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			for (int y = 0; y < BOARD_SIZE; y++) {
-				b.setTile(x, y, TILE_MAX - 1);
+				Board::setTile(b, x, y, TILE_MAX - 1);
 				if (y >= BOARD_SIZE / 2) {
-					result.setTile(x, y, TILE_MAX);
+					Board::setTile(result, x, y, TILE_MAX);
 				}
 			}
 		}
-		b.performMove(Move::Down);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		b = Board::performMove(b, Move::Down);
+		Assert::IsTrue(b == result);
 
 #if BOARD_SIZE == 4
 		// Merge board where each row contains one less tile.
-		b.clearBoard();
-		result.clearBoard();
+		Board::clearBoard(b);
+		Board::clearBoard(result);
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			for (int y = 0; y < BOARD_SIZE; y++) {
 				if (x >= y) {
-					b.setTile(x, y, 1);
+					Board::setTile(b, x, y, 1);
 				}
 			}
 		}
-		result.setTile(0, 3, 1);
-		result.setTile(1, 2, 0);
-		result.setTile(1, 3, 2);
-		result.setTile(2, 2, 1);
-		result.setTile(2, 3, 2);
-		result.setTile(3, 2, 2);
-		result.setTile(3, 3, 2);
-		b.performMove(Move::Down);
-		Assert::IsTrue(b.getBoard() == result.getBoard());
+		Board::setTile(result, 0, 3, 1);
+		Board::setTile(result, 1, 2, 0);
+		Board::setTile(result, 1, 3, 2);
+		Board::setTile(result, 2, 2, 1);
+		Board::setTile(result, 2, 3, 2);
+		Board::setTile(result, 3, 2, 2);
+		Board::setTile(result, 3, 3, 2);
+		b = Board::performMove(b, Move::Down);
+		Assert::IsTrue(b == result);
 #endif
 	}
 

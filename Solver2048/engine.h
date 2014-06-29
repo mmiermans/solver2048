@@ -14,16 +14,16 @@ public:
 	Engine();
 	~Engine();
 
-	Move solve(Board& board);
+	Move solve(BOARD board);
 
-	void setRandomTile(Board& board);
+	void setRandomTile(BOARD& board);
 
 private:
 	fastrand* fastRng;
-	int evaluateBoard(Board& board);
+	int evaluateBoard(BOARD b);
 	SearchNode* nodes;
 	Move activeMove;
 
-	double solveRecursive(int index);
+	double solveRecursive(int index, BOARD b);
 };
 
