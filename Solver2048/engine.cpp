@@ -1,19 +1,20 @@
 #include <iostream>
 #include <string>
 #include <stdio.h>
-
-#include <sparsehash/internal/sparseconfig.h>
-#include <sparsehash/dense_hash_set>
+#include <limits>
+#include <float.h>
 
 #include "engine.h"
 #include "searchnode.h"
 
-#define LOOK_AHEAD 2
+#define LOOK_AHEAD 4
 
 Engine::Engine()
 {
 	fastRng = new fastrand;
 	BitMath::initRng(fastRng);
+
+	scoreMap.set_empty_key(-1);
 
 	nodes = new SearchNode[LOOK_AHEAD];
 }
@@ -25,8 +26,22 @@ Engine::~Engine()
 }
 
 Move Engine::solve(Board board) {
-	double bestScore = INT_MIN;
+	double bestScore = -DBL_MAX;
 	Move bestMove = (Move)0;
+
+	unsigned char validMoves = BoardLogic::getValidMoves(board);
+
+	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
+		Move move = (Move)(1 << moveIndex);
+		if ((validMoves & move) != 0) {
+			Board movedBoard = BoardLogic::performMove(board, move);
+			double score = solveRecursive(0, movedBoard);
+			if (bestScore < score) {
+				bestScore = score;
+				bestMove = move;
+			}
+		}
+	}
 
 	return bestMove;
 }
@@ -47,15 +62,59 @@ double Engine::solveRecursive(int index, Board b) {
 	if (BoardLogic::hasEmptyTile(b) == false) {
 		return evaluateBoard(b);
 	}
+	assert(index < LOOK_AHEAD);
+
+	double scores[BOARD_SIZE_SQ][NEW_VALUE_COUNT];
+	for (int i = 0; i < BOARD_SIZE_SQ; i++) {
+		for (int j = 0; j < NEW_VALUE_COUNT; j++) {
+			scores[i][j] = -DBL_MAX;
+		}
+	}
 
 	SearchNode& node = nodes[index];
 	node.generateChildren(b);
 
-	double currentScore = 0;
-	double bestScore = INT_MIN;
-	bool hasNext = true;
+	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
+		for (int v = 0; v < NEW_VALUE_COUNT; v++) {
+			int childCount = node.childCount[moveIndex][v];
+			for (int childIndex = 0; childIndex < childCount; childIndex++) {
+				ChildNode& childNode = node.children[moveIndex][childIndex][v];
+				double score;
+				if (index < LOOK_AHEAD - 1) {
+					score = solveRecursive(index + 1, childNode.board);
+				} else {
+					score = evaluateBoard(childNode.board);
+				}
 
-	return bestScore;
+				for (int p = 0; p < 4 && childNode.positions[p] >= 0; p++) {
+					int position = childNode.positions[p];
+					if (position >= 0) {
+						assert(position < BOARD_SIZE_SQ);
+						double& oldScore = scores[position][v];
+						if (oldScore < score)
+							oldScore = score;
+					} else {
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	// Aggregate scores
+	double result = 0;
+	const double pValue[NEW_VALUE_COUNT] = { 0.9, 0.1 };
+	for (int p = 0; p < BOARD_SIZE_SQ; p++) {
+		for (int v = 0; v < NEW_VALUE_COUNT; v++) {
+			if (scores[p][v] != -DBL_MAX) {
+				result += pValue[v] * scores[p][v];
+			}
+		}
+	}
+
+	result /= node.emptyTileCount;
+
+	return result;
 }
 
 int Engine::evaluateBoard(Board b) {
@@ -74,31 +133,32 @@ int Engine::evaluateBoard(Board b) {
 #endif
 
 	int i = 1;
-	for (; i < BOARD_SIZE_SQ; i++) {
-		b >>= TILE_BITS;
+	b >>= TILE_BITS;
+	while (i < BOARD_SIZE_SQ) {
 		Board tile = 1 << (b & TILE_MASK);
 
-		if (tile < previousTile) {
-			score += (int)tile;
-			previousTile = tile;
-		} else {
-			if (tile == previousTile) {
-				score += (int)tile;
-			} else {
-				score -= ((i >> BOARD_LOG_SIZE) + 1) * (int)tile;
-			}
+		if (tile <= previousTile) {
+			score += 10 * (int)tile;
+			b >>= TILE_BITS;
+			i++;
+		}
+
+		if (tile >= previousTile) {
 			break;
 		}
+
+		previousTile = tile;
 	}
 
-	for (; i < BOARD_SIZE_SQ; i++) {
+	while (b) {
 		b >>= TILE_BITS;
-		score -= ((i >> BOARD_LOG_SIZE) + 1) * (1 << (b & TILE_MASK));
+		int tile = (b & TILE_MASK);
+		score -= tile * (1 << tile);
 	}
 
 	// Subtract penalty for 'game over' board.
 	if (BoardLogic::hasEmptyTile(b) == false) {
-		score -= 2048;
+		score -= 1 << 14;
 	}
 
 	return score;

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <sparsehash/internal/sparseconfig.h>
+#include <sparsehash/dense_hash_map>
+
 #include "bitmath.h"
 #include "board.h"
 #include "direction.h"
@@ -8,9 +11,6 @@
 class Engine
 {
 public:
-	bool debug = true;
-	int depth = 10;
-
 	Engine();
 	~Engine();
 
@@ -20,10 +20,11 @@ public:
 
 private:
 	fastrand* fastRng;
-	int evaluateBoard(Board b);
 	SearchNode* nodes;
-	Move activeMove;
+	google::dense_hash_map<Board, double> scoreMap;
 
 	double solveRecursive(int index, Board b);
+
+	int evaluateBoard(Board b);
 };
 

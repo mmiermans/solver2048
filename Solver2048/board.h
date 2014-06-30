@@ -26,6 +26,8 @@ public:
 
 	static inline void clearBoard(Board& b) { b = (Board)0; }
 
+	static void printBoard(Board board);
+
 	static unsigned char getValidMoves(Board board);
 
 	static Board performMove(Board board, Move move);

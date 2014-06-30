@@ -10,8 +10,8 @@ void SearchNode::generateChildren(Board b) {
 	memset(&childCount, 0, sizeof(childCount));
 
 	Board emptyMask = BoardLogic::getEmptyMask(b);
-	int emptyMaskCount = BitMath::popCount(emptyMask) / TILE_BITS;
-	if (emptyMaskCount == 0)
+	emptyTileCount = BitMath::popCount(emptyMask) / TILE_BITS;
+	if (emptyTileCount == 0)
 		return;
 
 	// addLR is a mask of where tiles should be inserted to generate unique boards.
@@ -47,18 +47,18 @@ void SearchNode::generateChildren(Board b) {
 			// Loop through secondary coordinate.
 			int posStart = i * posStepI;
 			int posEnd = posStart + BOARD_SIZE*posStep;
-			int seqIndex = 2 * i;
+			int seqIndex;
 			for (int pos = posStart; pos < posEnd; pos += posStep) {
 				// Test whether the board is empty at pos.
 				if ((emptyMask & (TILE_MASK << (pos * TILE_BITS))) != 0) {
 					if (isNewSequence) {
 						// Initialize variables for new sequence.
 						add[d][sequenceCount] |= TILE_MASK << (pos*TILE_BITS);
+						seqIndex = (2 * i) + sequenceCount;
 						position = &(positions[d][seqIndex][0]);
 						positionFirst[d][seqIndex] = pos;
 						emptyCount = &(emptyCounts[d][seqIndex]);
 						sequenceCount++;
-						seqIndex++;
 						isNewSequence = false;
 					}
 					// Extend sequence.
@@ -128,11 +128,10 @@ void SearchNode::generateChildren(Board b) {
 		for (int i = 0; i < BOARD_SIZE; i++, mask <<= maskShift) {
 			// Loop through primary/secondary added tile.
 			for (int j = 0; j < 2 && (add[d][j] & mask) != 0; j++) {
+				int8_t* posArr = positions[d][2 * i + j];
 				// Loop through new tile values
 				for (int v = 0; v < NEW_VALUE_COUNT; v++) {
-					int8_t currentPositions[4];
-					*((uint32_t*)currentPositions) = *((uint32_t*)positions[d][2 * i + j]);
-
+					int8_t currentPositions[4] = { posArr[0], posArr[1], posArr[2], posArr[3]};
 					// Test whether the performed move is valid.
 					if ((baseDiff & ~mask) == 0) {
 						int8_t p = checkPosition[2 * i + j];
@@ -140,7 +139,7 @@ void SearchNode::generateChildren(Board b) {
 						if (((bWithCheckTile ^ addAndMove[j][v]) & mask) == 0) {
 							// Nothing changed. If this was the only tile in this sequence,
 							//  then continue, otherwise delete p from the list of positions.
-							if (currentPositions[1] == -1) {
+							if (currentPositions[1] < 0) {
 								continue;
 							} else {
 								currentPositions[3] = -1;
@@ -159,7 +158,10 @@ void SearchNode::generateChildren(Board b) {
 					// Combine two boards, one with an inserted tiles and one without.
 					childNode.board = (baseBoard & ~mask) | (mask & addAndMove[j][v]);
 					// Copy all four positions in one go.
-					*((uint32_t*)childNode.positions) = *((uint32_t*)currentPositions);
+					childNode.positions[0] = currentPositions[0];
+					childNode.positions[1] = currentPositions[1];
+					childNode.positions[2] = currentPositions[2];
+					childNode.positions[3] = currentPositions[3];
 				}
 			}
 		}
@@ -168,15 +170,19 @@ void SearchNode::generateChildren(Board b) {
 	// Handle 'game over' cases. These do not have any valid moves, so therefore
 	// the above loop does not create any child nodes. Remedy this by creating an
 	// (arbitrary) left move node.
-	if (emptyMaskCount == 1) {
+	if (emptyTileCount == 1) {
 		for (int v = 0; v < NEW_VALUE_COUNT; v++) {
 			if ((childCount[0][v] + childCount[1][v] + childCount[2][v] + childCount[3][v]) == 0) {
 				childCount[0][v] = 1;
 				for (int i = 0; i < BOARD_SIZE; i++) {
 					if (positions[0][2 * i] >= 0) {
 						ChildNode& childNode = children[0][0][v];
+						int8_t* posArr = positions[0][2 * i];
 						childNode.board = b | (((v + MIN_NEW_VALUE) * MASK_TILES_LSB) & emptyMask);
-						*((uint32_t*)childNode.positions) = *((uint32_t*)positions[0][2 * i]);
+						childNode.positions[0] = posArr[0];
+						childNode.positions[1] = posArr[1];
+						childNode.positions[2] = posArr[2];
+						childNode.positions[3] = posArr[3];
 						break;
 					}
 				}

@@ -10,35 +10,6 @@
 
 using namespace std;
 
-void printBoard(Board board) {
-	char filler = '#';
-	int tileWidth = 7;
-
-	string outerBorder = string(tileWidth * BOARD_SIZE + 1, filler) + '\n';
-	string innerBorder = string(1, filler);
-	for (int i = 0; i < BOARD_SIZE; i++)
-		innerBorder += string(tileWidth - 1, ' ') + filler;
-	innerBorder += '\n';
-
-	for (int y = 0; y < BOARD_SIZE; y++) {
-		cout << outerBorder;
-		cout << innerBorder;
-		cout << filler;
-		for (int x = 0; x < BOARD_SIZE; x++) {
-			cout.width(tileWidth - 2);
-			Tile logTile = BoardLogic::getTile(board, x, y);
-			if (logTile > 0)
-				cout << (1 << logTile);
-			else
-				cout << ' ';
-			cout << ' ' << filler;
-		}
-		cout << endl;
-		cout << innerBorder;
-	}
-	cout << outerBorder;
-}
-
 void askTile(Board& board) {
 	int x = 0;
 	int y = 0;
@@ -59,6 +30,7 @@ void playSimpleStrategy() {
 	uint64_t attempts = 0;
 	uint64_t maxTotal = 0;
 	uint64_t maxTile = 0;
+	SearchNode* sn = new SearchNode();
 
 	while (true) {
 
@@ -86,6 +58,9 @@ void playSimpleStrategy() {
 
 		attempts++;
 
+		BoardLogic::printBoard(b);
+
+#if 0
 		uint64_t sum = 0;
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			for (int y = 0; y < BOARD_SIZE; y++) {
@@ -96,19 +71,13 @@ void playSimpleStrategy() {
 				sum += v;
 			}
 		}
+#endif
 	}
+
+	delete sn;
 }
 
-int main(int argc, char* argv[]) {
-	Board b;
-	Engine e;
-
-	b = 0x0000000102222355;
-	printBoard(b);
-	SearchNode sn;
-	sn.generateChildren(b);
-
-	cout << endl;
+void printChildBoards(SearchNode& sn) {
 	for (int i = 0; i < 4; i++) {
 		for (int v = 0; v < 2; v++) {
 			for (int j = 0; j < sn.childCount[i][v]; j++) {
@@ -120,33 +89,38 @@ int main(int argc, char* argv[]) {
 				}
 				const char* moveNames[4] = { "Up", "Right", "Down", "Left" };
 				cout << "\tMove: " << moveNames[i] << endl;
-				printBoard(childBoard);
+				BoardLogic::printBoard(childBoard);
 			}
 		}
 	}
+}
 
-	getchar();
+int main(int argc, char* argv[]) {
+	Board b = 0;
+	Engine e;
 
-	BoardLogic::setTile(b, 0, 0, 6);
-	BoardLogic::setTile(b, 0, 1, 4);
-	BoardLogic::setTile(b, 0, 2, 3);
-	BoardLogic::setTile(b, 0, 3, 2);
-	BoardLogic::setTile(b, 1, 0, 4);
-	BoardLogic::setTile(b, 2, 0, 3);
-	BoardLogic::setTile(b, 2, 1, 2);
-	BoardLogic::setTile(b, 2, 2, 1);
-	BoardLogic::setTile(b, 3, 0, 2);
+#if 0
+	// b = 0x0000000102222355;
+	b = 0x0000100000002100;
 	printBoard(b);
+	SearchNode sn;
+	sn.generateChildren(b);
+	printChildBoards(sn);
+	cout << endl;
+	getchar();
+#endif
 
-	uint64_t totalSum = 0;
-	uint64_t attempts = 0;
-	uint64_t maxTotal = 0;
-	uint64_t maxTile = 0;
-	
+#if 0
+	b = 0x0000000000002120;
+	BoardLogic::printBoard(b);
+	SearchNode sn;
+	Move bestMove = e.solve(b);
+	getchar();
+#endif
+
 	// Set two random tiles.
 	e.setRandomTile(b);
 	e.setRandomTile(b);
-	printBoard(b);
 
 	while (BoardLogic::getValidMoves(b) != (Move)0) {
 		Move bestMove = e.solve(b);
@@ -160,13 +134,12 @@ int main(int argc, char* argv[]) {
 		} else if (bestMove & Move::Up) {
 			cout << "Up";
 		}
+		cout << endl;
 
-		cout << "\t" << b << endl;
 		b = BoardLogic::performMove(b, bestMove);
 		e.setRandomTile(b);
 
-		cout << b << endl;
-		printBoard(b);
+		BoardLogic::printBoard(b);
 	}
 
 	getchar();

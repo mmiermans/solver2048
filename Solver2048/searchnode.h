@@ -14,6 +14,7 @@ public:
 	/// </summary>
 	ChildNode children[4][BOARD_SIZE_SQ / 2][NEW_VALUE_COUNT];
 	unsigned char childCount[4][2];
+	int emptyTileCount;
 
 	SearchNode();
 

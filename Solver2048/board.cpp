@@ -1,4 +1,38 @@
+#include <string>
+#include <iostream>
+
 #include "board.h"
+
+using namespace std;
+
+void BoardLogic::printBoard(Board board) {
+	char filler = '#';
+	int tileWidth = 7;
+
+	string outerBorder = string(tileWidth * BOARD_SIZE + 1, filler) + '\n';
+	string innerBorder = string(1, filler);
+	for (int i = 0; i < BOARD_SIZE; i++)
+		innerBorder += string(tileWidth - 1, ' ') + filler;
+	innerBorder += '\n';
+
+	for (int y = 0; y < BOARD_SIZE; y++) {
+		cout << outerBorder;
+		cout << innerBorder;
+		cout << filler;
+		for (int x = 0; x < BOARD_SIZE; x++) {
+			cout.width(tileWidth - 2);
+			Tile logTile = BoardLogic::getTile(board, x, y);
+			if (logTile > 0)
+				cout << (1 << logTile);
+			else
+				cout << ' ';
+			cout << ' ' << filler;
+		}
+		cout << endl;
+		cout << innerBorder;
+	}
+	cout << outerBorder;
+}
 
 /// <summary>
 /// Determines which moves are possible
