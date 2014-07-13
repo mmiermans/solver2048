@@ -11,6 +11,7 @@
 class BoardLogic
 {
 public:
+
 	/// <summary>
 	/// Calculates the position of a tile on a board.
 	/// </summary>
@@ -32,6 +33,10 @@ public:
 
 	static Board performMove(Board board, Move move);
 
+	static inline int sumTiles(Board b) { int score = 0; while (b) { score += (~1) & (1 << (b & TILE_MASK)); b >>= TILE_BITS; } return score; }
+
+	static inline int calculateScore(Board b) { int score = 0; while (b) { score += ((b & TILE_MASK) - 1) * ((~1) & (1 << (b & TILE_MASK))); b >>= TILE_BITS; } return score; }
+
 	/// <summary>
 	/// Calculates a board that indicates which tiles are empty
 	/// </summary>
@@ -45,6 +50,7 @@ public:
 	static Board hasEmptyTile(Board b);
 
 private:
+
 	/// <summary>
 	/// Helper function for getEmptyMask()
 	/// </summary>

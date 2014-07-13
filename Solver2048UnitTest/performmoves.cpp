@@ -8,24 +8,28 @@ namespace Solver2048UnitTest {
 	TEST_CLASS(PerformMoves) {
 public:
 
-	/// <summary>
-	/// Test performing a left move.
-	/// </summary>
-	TEST_METHOD(PerformMoveLeft) {
+	TEST_METHOD(PerformMoveLeftOnEmptyBoard) {
 		Board b = 0;
 		Board result = 0;
-
 		b = BoardLogic::performMove(b, Move::Left);
 		Assert::IsTrue(b == (Board)0);
+	}
 
+	TEST_METHOD(PerformMoveLeftOnSingleTile) {
 		// Merge upper-left tile (nothing to do)
+		Board b = 0;
+		Board result = 0;
 		BoardLogic::clearBoard(b);
 		BoardLogic::setTile(b, 0, 0, 2);
 		result = b;
 		b = BoardLogic::performMove(b, Move::Left);
 		Assert::IsTrue(b == result);
+	}
 
+	TEST_METHOD(PerformMoveLeftOnColumn) {
 		// Merge left column (nothing to do)
+		Board b = 0;
+		Board result = 0;
 		BoardLogic::clearBoard(b);
 		for (int i = 0; i < BOARD_SIZE; i++) {
 			BoardLogic::setTile(b, 0, i, 2);
@@ -33,8 +37,12 @@ public:
 		result = b;
 		b = BoardLogic::performMove(b, Move::Left);
 		Assert::IsTrue(b == result);
+	}
 
+	TEST_METHOD(PerformMoveLeftOnRow) {
 		// Merge row 1212 (nothing to do)
+		Board b = 0;
+		Board result = 0;
 		BoardLogic::clearBoard(b);
 		for (int i = 0; i < BOARD_SIZE; i++) {
 			BoardLogic::setTile(b, i, 1, 1 + (i % 2));
@@ -42,8 +50,12 @@ public:
 		result = b;
 		b = BoardLogic::performMove(b, Move::Left);
 		Assert::IsTrue(b == result);
+	}
 
+	TEST_METHOD(PerformMoveLeftWithEmptyTiles) {
 		// Merge with empty tiles inbetween
+		Board b = 0;
+		Board result = 0;
 		BoardLogic::clearBoard(b);
 		BoardLogic::clearBoard(result);
 		for (int i = 0; i < BOARD_SIZE; i++) {
@@ -53,8 +65,12 @@ public:
 		}
 		b = BoardLogic::performMove(b, Move::Left);
 		Assert::IsTrue(b == result);
+	}
 
+	TEST_METHOD(PerformMoveLeftOnFullBoard) {
 		// Merge a full board
+		Board b = 0;
+		Board result = 0;
 		BoardLogic::clearBoard(b);
 		BoardLogic::clearBoard(result);
 		for (int x = 0; x < BOARD_SIZE; x++) {
@@ -67,9 +83,13 @@ public:
 		}
 		b = BoardLogic::performMove(b, Move::Left);
 		Assert::IsTrue(b == result);
+	}
 
+	TEST_METHOD(PerformMoveLeftWithVariedTileCount) {
 #if BOARD_SIZE == 4
 		// Merge board where each row contains one less tile.
+		Board b = 0;
+		Board result = 0;
 		BoardLogic::clearBoard(b);
 		BoardLogic::clearBoard(result);
 		for (int x = 0; x < BOARD_SIZE; x++) {
@@ -89,7 +109,6 @@ public:
 		b = BoardLogic::performMove(b, Move::Left);
 		Assert::IsTrue(b == result);
 #endif
-
 	}
 
 	/// <summary>

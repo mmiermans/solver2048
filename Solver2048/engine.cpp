@@ -3,20 +3,28 @@
 #include <stdio.h>
 #include <limits>
 #include <float.h>
+#include <math.h>
 
 #include "engine.h"
 #include "searchnode.h"
 
-#define LOOK_AHEAD 4
+#define MAX_LOOK_AHEAD 16
+#define MIN_SCORE (-DBL_MAX)
 
 Engine::Engine()
+	: scoreMap(1<<20)
 {
 	fastRng = new fastrand;
 	BitMath::initRng(fastRng);
 
 	scoreMap.set_empty_key(-1);
 
-	nodes = new SearchNode[LOOK_AHEAD];
+	nodes = new SearchNode[MAX_LOOK_AHEAD];
+
+	moveCounter[0] = 0;
+	moveCounter[1] = 0;
+	moveCounter[2] = 0;
+	moveCounter[3] = 0;
 }
 
 Engine::~Engine()
@@ -26,8 +34,26 @@ Engine::~Engine()
 }
 
 Move Engine::solve(Board board) {
+	clock_t startTime = clock();
+
+	scoreMap.clear();
+	hashHits = 0;
+	hashMisses = 0;
+
 	double bestScore = -DBL_MAX;
-	Move bestMove = (Move)0;
+	int bestMoveIndex = 0;
+
+	int tileSum = BoardLogic::sumTiles(board);
+
+	int t = tileSum / 1024;
+	dfsLookAhead = 2;
+	while (t > 0) {
+		dfsLookAhead++;
+		t /= 2;
+	}
+	if (dfsLookAhead > MAX_LOOK_AHEAD) {
+		dfsLookAhead = MAX_LOOK_AHEAD;
+	}
 
 	unsigned char validMoves = BoardLogic::getValidMoves(board);
 
@@ -35,57 +61,89 @@ Move Engine::solve(Board board) {
 		Move move = (Move)(1 << moveIndex);
 		if ((validMoves & move) != 0) {
 			Board movedBoard = BoardLogic::performMove(board, move);
-			double score = solveRecursive(0, movedBoard);
+			double score = depthFirstSolve(0, movedBoard, 0);
 			if (bestScore < score) {
 				bestScore = score;
-				bestMove = move;
+				bestMoveIndex = moveIndex;
 			}
 		}
 	}
 
-	return bestMove;
+	moveCounter[bestMoveIndex]++;
+
+	clock_t endTime = clock();
+	cpuTime += (endTime - startTime);
+
+	return (Move)(1 << bestMoveIndex);
 }
 
-// TEST
-void printMove(Move m) {
-	if (m == Move::Left)
-		std::cout << "L";
-	else if (m == Move::Right)
-		std::cout << "R";
-	else if (m == Move::Up)
-		std::cout << "U";
-	else if (m == Move::Down)
-		std::cout << "D";
-}
-
-double Engine::solveRecursive(int index, Board b) {
+double Engine::depthFirstSolve(int index, Board b, double scoreSum) {
+	double bScore = evaluateBoard(b);
 	if (BoardLogic::hasEmptyTile(b) == false) {
-		return evaluateBoard(b);
+		return bScore;
 	}
-	assert(index < LOOK_AHEAD);
 
 	double scores[BOARD_SIZE_SQ][NEW_VALUE_COUNT];
 	for (int i = 0; i < BOARD_SIZE_SQ; i++) {
 		for (int j = 0; j < NEW_VALUE_COUNT; j++) {
-			scores[i][j] = -DBL_MAX;
+			scores[i][j] = MIN_SCORE;
 		}
 	}
 
 	SearchNode& node = nodes[index];
 	node.generateChildren(b);
+	double childScoreSum = scoreSum + bScore;
+
+	// Divide the 4 random numbers into 8 parts.
+	uint16_t* res16 = (uint16_t*)(fastRng->res);
 
 	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
 		for (int v = 0; v < NEW_VALUE_COUNT; v++) {
 			int childCount = node.childCount[moveIndex][v];
-			for (int childIndex = 0; childIndex < childCount; childIndex++) {
+			
+			// Initialize sampling variables.
+			int sampleCount = 8;
+			int samples[MAX_SEARCH_NODE_CHILDREN];
+			for (int i = 0; i < childCount; i++) {
+				samples[i] = i;
+			}
+			if (sampleCount < childCount) {
+				// Get random numbers
+				FastRand_SSE(fastRng);
+				for (int i = 0; i < sampleCount; i++) {
+					// j is a random integer with i <= j < n.
+					int j = ((res16[i] % (childCount - i)) + i);
+					// exchange samples[j] and samples[i].
+					int t = samples[i];
+					samples[i] = samples[j];
+					samples[j] = t;
+				}
+			} else {
+				sampleCount = childCount;
+			}
+
+			for (int sampleIndex = 0; sampleIndex < sampleCount; sampleIndex++) {
+				// Get child node
+				int childIndex = samples[sampleIndex];
 				ChildNode& childNode = node.children[moveIndex][childIndex][v];
+
+				// Get score from hashmap, by recursion or from evaluateBoard().
 				double score;
-				if (index < LOOK_AHEAD - 1) {
-					score = solveRecursive(index + 1, childNode.board);
+				hash_t::const_iterator it = scoreMap.find(childNode.board);
+				if (it != scoreMap.end()) {
+					score = it->second;
+					hashHits++;
 				} else {
-					score = evaluateBoard(childNode.board);
+					if (index < dfsLookAhead - 1) {
+						score = depthFirstSolve(index + 1, childNode.board, childScoreSum);
+					} else {
+						score = evaluateBoard(childNode.board);
+					}
+					scoreMap.insert(hash_t::value_type(childNode.board, score));
+					hashMisses++;
 				}
 
+				// Update score matrix.
 				for (int p = 0; p < 4 && childNode.positions[p] >= 0; p++) {
 					int position = childNode.positions[p];
 					if (position >= 0) {
@@ -93,6 +151,7 @@ double Engine::solveRecursive(int index, Board b) {
 						double& oldScore = scores[position][v];
 						if (oldScore < score)
 							oldScore = score;
+						nodeCounter++;
 					} else {
 						break;
 					}
@@ -104,23 +163,27 @@ double Engine::solveRecursive(int index, Board b) {
 	// Aggregate scores
 	double result = 0;
 	const double pValue[NEW_VALUE_COUNT] = { 0.9, 0.1 };
+	double totalWeight = 0;
 	for (int p = 0; p < BOARD_SIZE_SQ; p++) {
 		for (int v = 0; v < NEW_VALUE_COUNT; v++) {
-			if (scores[p][v] != -DBL_MAX) {
+			if (scores[p][v] != MIN_SCORE) {
 				result += pValue[v] * scores[p][v];
+				totalWeight += pValue[v];
 			}
 		}
 	}
 
-	result /= node.emptyTileCount;
+	result /= totalWeight;
+	if (node.emptyTileCount - totalWeight > 0.001 || node.emptyTileCount - totalWeight < -0.001) {
+		totalWeight = totalWeight + 0;
+	}
 
 	return result;
 }
 
 int Engine::evaluateBoard(Board b) {
-	Board previousTile = 1 << (b & TILE_MASK);
-	int score = (int)previousTile;
-	int sign = 1;
+	Board previousTile = b & TILE_MASK;
+	int score = 10 * (1 << previousTile);
 
 #if BOARD_SIZE == 4
 	b = (b & 0x0000FFFF0000FFFF) |
@@ -132,33 +195,27 @@ int Engine::evaluateBoard(Board b) {
 	#error TODO: implement for case != 4
 #endif
 
-	int i = 1;
-	b >>= TILE_BITS;
-	while (i < BOARD_SIZE_SQ) {
-		Board tile = 1 << (b & TILE_MASK);
+	while (b != 0) {
+		b >>= TILE_BITS;
+		Board tile = b & TILE_MASK;
 
-		if (tile <= previousTile) {
-			score += 10 * (int)tile;
-			b >>= TILE_BITS;
-			i++;
-		}
-
-		if (tile >= previousTile) {
+		if (tile > previousTile) {
 			break;
 		}
 
+		score += 10 * (int)(1 << tile);
 		previousTile = tile;
 	}
 
-	while (b) {
-		b >>= TILE_BITS;
+	while (b != 0) {
 		int tile = (b & TILE_MASK);
 		score -= tile * (1 << tile);
+		b >>= TILE_BITS;
 	}
 
 	// Subtract penalty for 'game over' board.
 	if (BoardLogic::hasEmptyTile(b) == false) {
-		score -= 1 << 14;
+		score -= 10 * (1 << 16);
 	}
 
 	return score;
@@ -183,6 +240,6 @@ void Engine::setRandomTile(Board& board) {
 
 	// Get random tile value with P(2|0.9) and P(4|0.1).
 	// 0xe6666666 = 0.9 * 2^32.
-	Tile randomTileValue = (fastRng->res[1] < 0xe6666666) ? 1 : 2;
+	Tile randomTileValue = (fastRng->res[1] < PROBABILITY_2) ? 1 : 2;
 	BoardLogic::setTile(board, randomEmptyTilePosition, randomTileValue);
 }

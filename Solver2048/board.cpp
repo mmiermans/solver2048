@@ -1,11 +1,15 @@
 #include <string>
 #include <iostream>
+#include <iomanip>
 
 #include "board.h"
+#include "precomputedmoves.h"
 
 using namespace std;
 
 void BoardLogic::printBoard(Board board) {
+	ios::fmtflags f(cout.flags());
+
 	char filler = '#';
 	int tileWidth = 7;
 
@@ -21,6 +25,7 @@ void BoardLogic::printBoard(Board board) {
 		cout << filler;
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			cout.width(tileWidth - 2);
+			cout.fill(' ');
 			Tile logTile = BoardLogic::getTile(board, x, y);
 			if (logTile > 0)
 				cout << (1 << logTile);
@@ -31,7 +36,12 @@ void BoardLogic::printBoard(Board board) {
 		cout << endl;
 		cout << innerBorder;
 	}
-	cout << outerBorder;
+
+	cout << "########## 0x";
+	cout << hex << setfill('0') << setw(16) << board << endl;
+
+	// Restore cout state
+	cout.flags(f);
 }
 
 /// <summary>
@@ -99,6 +109,15 @@ Board BoardLogic::performMove(Board board, Move move) {
 }
 
 Board BoardLogic::moveLeft(Board board) {
+#if 1
+	Board result =
+		(((Board)precomputedMovesLeft[(board >> (0 * ROW_BITS)) & MASK_ROW_FIRST]) << (0 * ROW_BITS)) |
+		(((Board)precomputedMovesLeft[(board >> (1 * ROW_BITS)) & MASK_ROW_FIRST]) << (1 * ROW_BITS)) |
+		(((Board)precomputedMovesLeft[(board >> (2 * ROW_BITS)) & MASK_ROW_FIRST]) << (2 * ROW_BITS)) |
+		(((Board)precomputedMovesLeft[(board >> (3 * ROW_BITS)) & MASK_ROW_FIRST]) << (3 * ROW_BITS));
+	return result;
+#else
+
 	board = shiftLeft(board);
 
 	// Merge columns from left to right.
@@ -120,9 +139,18 @@ Board BoardLogic::moveLeft(Board board) {
 
 	board = shiftLeft(board);
 	return board;
+#endif
 }
 
 Board BoardLogic::moveRight(Board board) {
+#if 1
+	Board result =
+		(((Board)precomputedMovesRight[(board >> (0 * ROW_BITS)) & MASK_ROW_FIRST]) << (0 * ROW_BITS)) |
+		(((Board)precomputedMovesRight[(board >> (1 * ROW_BITS)) & MASK_ROW_FIRST]) << (1 * ROW_BITS)) |
+		(((Board)precomputedMovesRight[(board >> (2 * ROW_BITS)) & MASK_ROW_FIRST]) << (2 * ROW_BITS)) |
+		(((Board)precomputedMovesRight[(board >> (3 * ROW_BITS)) & MASK_ROW_FIRST]) << (3 * ROW_BITS));
+	return result;
+#else
 	board = shiftRight(board);
 
 	// Merge columns from right to left.
@@ -144,6 +172,7 @@ Board BoardLogic::moveRight(Board board) {
 
 	board = shiftRight(board);
 	return board;
+#endif
 }
 
 Board BoardLogic::moveUp(Board board) {

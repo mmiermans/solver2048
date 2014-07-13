@@ -3,6 +3,8 @@
 #include "board.h"
 #include "ChildNode.h"
 
+#define MAX_SEARCH_NODE_CHILDREN (BOARD_SIZE_SQ / 2)
+
 class SearchNode
 {
 public:
@@ -12,7 +14,7 @@ public:
 	/// at which a tile was inserted to obtain the board.
 	/// Array indices: children[moveIndex][n'th child][value]
 	/// </summary>
-	ChildNode children[4][BOARD_SIZE_SQ / 2][NEW_VALUE_COUNT];
+	ChildNode children[4][MAX_SEARCH_NODE_CHILDREN][NEW_VALUE_COUNT];
 	unsigned char childCount[4][2];
 	int emptyTileCount;
 

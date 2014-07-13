@@ -2,7 +2,10 @@
 //
 
 #include <iostream>
+#include <iomanip>
 #include <string>
+#include <time.h>
+
 #include "board.h"
 #include "engine.h"
 #include "searchnode.h"
@@ -26,55 +29,67 @@ void playSimpleStrategy() {
 	Board b;
 	Engine e;
 
-	uint64_t totalSum = 0;
-	uint64_t attempts = 0;
-	uint64_t maxTotal = 0;
-	uint64_t maxTile = 0;
-	SearchNode* sn = new SearchNode();
+	for (int i = 0; i < 5; i++) {
+		clock_t startTime = clock();
 
-	while (true) {
+		uint64_t totalSum = 0;
+		uint64_t attempts = 0;
+		uint64_t moveCount = 0;
+		uint64_t maxTotal = 0;
+		uint64_t maxTile = 0;
+		SearchNode* sn = new SearchNode();
 
-		bool hasPossibleMove = true;
-		BoardLogic::clearBoard(b);
+		while (startTime + (3 * CLOCKS_PER_SEC) > clock()) {
 
-		while (hasPossibleMove) {
-			e.setRandomTile(b);
+			for (int j = 0; j < 1000; j++) {
+				bool hasPossibleMove = true;
+				BoardLogic::clearBoard(b);
 
-			// Do move
-			char moves = BoardLogic::getValidMoves(b);
-			if (moves & Move::Down) {
-				b = BoardLogic::performMove(b, Move::Down);
-			} else if (moves & Move::Left) {
-				b = BoardLogic::performMove(b, Move::Left);
-			} else if (moves & Move::Right) {
-				b = BoardLogic::performMove(b, Move::Right);
-			} else if (moves & Move::Up) {
-				b = BoardLogic::performMove(b, Move::Up);
-			} else {
-				// Game over!
-				hasPossibleMove = false;
-			}
-		}
+				while (hasPossibleMove) {
+					e.setRandomTile(b);
 
-		attempts++;
+					// Do move
+					char moves = BoardLogic::getValidMoves(b);
+					if (moves & Move::Up) {
+						b = BoardLogic::performMove(b, Move::Up);
+					} else {
+						Move moveA = Move::Left;
+						Move moveB = Move::Right;
+						Tile firstRowLastTile = (b >> (3 * TILE_BITS)) & TILE_MASK;
+						if (firstRowLastTile >= 1) {
+							if (((firstRowLastTile * MASK_ROW_LSB) + 0x0123) == (b & MASK_ROW_FIRST)) {
+								Move moveA = Move::Right;
+								Move moveB = Move::Left;
+							}
+						}
 
-		BoardLogic::printBoard(b);
+						if (moves & moveA) {
+							b = BoardLogic::performMove(b, moveA);
+						} else if (moves & moveB) {
+							b = BoardLogic::performMove(b, moveB);
+						} else if (moves & Move::Down) {
+							b = BoardLogic::performMove(b, Move::Down);
+						} else {
+							// Game over!
+							hasPossibleMove = false;
+						}
+					}
 
-#if 0
-		uint64_t sum = 0;
-		for (int x = 0; x < BOARD_SIZE; x++) {
-			for (int y = 0; y < BOARD_SIZE; y++) {
-				int v = (1 << BoardLogic::getTile(b, x, y));
-				if (v == 2048) {
-					printBoard(b);
+					moveCount++;
 				}
-				sum += v;
+
+				attempts++;
 			}
 		}
-#endif
+
+		clock_t endTime = clock();
+		cout << (CLOCKS_PER_SEC * moveCount) / (endTime - startTime) << " moves/s" << endl;
+
+		delete sn;
 	}
 
-	delete sn;
+	getchar();
+
 }
 
 void printChildBoards(SearchNode& sn) {
@@ -95,9 +110,30 @@ void printChildBoards(SearchNode& sn) {
 	}
 }
 
+void precomputeMoves() {
+	for (int i = 0; i < 1 << 16; i++) {
+		Board iBoard = (Board)i;
+		Board result = BoardLogic::performMove(iBoard, Move::Right);
+
+		if ((result & ~0xFFFF) != 0)
+			result = 0xFFFF;
+
+		cout << "0x" << std::hex << setw(4) << uppercase << setfill('0') << result;
+		if (i != (1 << 16) - 1)
+			cout << ", ";
+			if (i % 16 == 15)
+				cout << " \\\\" << endl;
+	}
+	getchar();
+}
+
 int main(int argc, char* argv[]) {
 	Board b = 0;
 	Engine e;
+
+//	precomputeMoves();
+
+//	playSimpleStrategy();
 
 #if 0
 	// b = 0x0000000102222355;
@@ -121,26 +157,52 @@ int main(int argc, char* argv[]) {
 	// Set two random tiles.
 	e.setRandomTile(b);
 	e.setRandomTile(b);
+	int moveCount = 0;
+	clock_t lastPrintTime = 0;
+	int printStep = CLOCKS_PER_SEC / 2;
 
-	while (BoardLogic::getValidMoves(b) != (Move)0) {
+	bool hasValidMove = true;
+	while (hasValidMove) {
 		Move bestMove = e.solve(b);
 
-		if (bestMove & Move::Down) {
-			cout << "Down";
-		} else if (bestMove & Move::Left) {
-			cout << "Left";
-		} else if (bestMove & Move::Right) {
-			cout << "Right";
-		} else if (bestMove & Move::Up) {
-			cout << "Up";
-		}
-		cout << endl;
-
+		moveCount++;
 		b = BoardLogic::performMove(b, bestMove);
 		e.setRandomTile(b);
 
-		BoardLogic::printBoard(b);
+		hasValidMove = (BoardLogic::getValidMoves(b) != (Move)0);
+
+		if (hasValidMove == false || clock() - lastPrintTime >= printStep) {
+
+			int kNodesPerSec = ((CLOCKS_PER_SEC * e.nodeCounter) / (1000 * e.cpuTime));
+
+			cout << "Move count: " << moveCount << "\t";
+			cout << "kNodes/s: " << kNodesPerSec << "\t";
+			cout << "Board eval: " << e.evaluateBoard(b) << "\t";
+			cout << "Score: " << BoardLogic::calculateScore(b) << "\t";
+			for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
+				Move move = (Move)(1 << moveIndex);
+				if (move & Move::Down) {
+					cout << "D=";
+				} else if (move & Move::Left) {
+					cout << "L=";
+				} else if (move & Move::Right) {
+					cout << "R=";
+				} else if (move & Move::Up) {
+					cout << "U=";
+				}
+				cout << (100 * e.moveCounter[moveIndex] / moveCount) << " ";
+			}
+			//cout << " Hash hits: " << (float)e.hashHits / (float)(e.hashHits + e.hashMisses);
+			cout << endl;
+
+			BoardLogic::printBoard(b);
+			cout << endl;
+			lastPrintTime = clock();
+
+		}
 	}
+
+	cout << "GAME OVER.";
 
 	getchar();
 

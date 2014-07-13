@@ -175,14 +175,11 @@ void SearchNode::generateChildren(Board b) {
 			if ((childCount[0][v] + childCount[1][v] + childCount[2][v] + childCount[3][v]) == 0) {
 				childCount[0][v] = 1;
 				for (int i = 0; i < BOARD_SIZE; i++) {
-					if (positions[0][2 * i] >= 0) {
+					if (positions[0][2 * i][0] >= 0) {
 						ChildNode& childNode = children[0][0][v];
-						int8_t* posArr = positions[0][2 * i];
 						childNode.board = b | (((v + MIN_NEW_VALUE) * MASK_TILES_LSB) & emptyMask);
-						childNode.positions[0] = posArr[0];
-						childNode.positions[1] = posArr[1];
-						childNode.positions[2] = posArr[2];
-						childNode.positions[3] = posArr[3];
+						childNode.positions[0] = positions[0][2 * i][0];
+						childNode.positions[1] = -1;
 						break;
 					}
 				}

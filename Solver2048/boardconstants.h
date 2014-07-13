@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 typedef uint64_t Board;
 typedef uint64_t Tile;
@@ -7,6 +8,9 @@ typedef uint64_t Tile;
 #define BOARD_SIZE_SQ (BOARD_SIZE*BOARD_SIZE)
 #define BOARD_LOG_SIZE 2
 #define BOARD_MASK (~0)
+
+// Probability of obtaining a 2 tile (90%) instead of 4.
+#define PROBABILITY_2 0xe6666666
 
 #define TILE_BITS 4
 #define TILE_MAX ((1<<TILE_BITS)-1)
@@ -33,6 +37,7 @@ typedef uint64_t Tile;
 	#define MASK_ROW_FIRST     0x000000000000FFFFULL
 	#define MASK_ROW_SECOND    0x00000000FFFF0000ULL
 	#define MASK_ROW_LAST      0xFFFF000000000000ULL
+	#define MASK_ROW_LSB       0x0000000000001111ULL
 	#define MASK_TILES_LSB     0x1111111111111111ULL
 	#define MASK_TILES_MSB     0x8888888888888888ULL
 #else

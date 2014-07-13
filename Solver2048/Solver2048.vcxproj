@@ -83,6 +83,7 @@
     <ClInclude Include="direction.h" />
     <ClInclude Include="engine.h" />
     <ClInclude Include="FastRand.h" />
+    <ClInclude Include="precomputedmoves.h" />
     <ClInclude Include="searchnode.h" />
     <ClInclude Include="sparsehash\internal\densehashtable.h" />
     <ClInclude Include="sparsehash\internal\hashtable-common.h" />
