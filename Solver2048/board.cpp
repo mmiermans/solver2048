@@ -28,7 +28,7 @@ void BoardLogic::printBoard(Board board) {
 			cout.fill(' ');
 			Tile logTile = BoardLogic::getTile(board, x, y);
 			if (logTile > 0)
-				cout << (1 << logTile);
+				cout << std::dec << (1 << logTile);
 			else
 				cout << ' ';
 			cout << ' ' << filler;

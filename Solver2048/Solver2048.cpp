@@ -159,7 +159,9 @@ int main(int argc, char* argv[]) {
 	e.setRandomTile(b);
 	int moveCount = 0;
 	clock_t lastPrintTime = 0;
-	int printStep = CLOCKS_PER_SEC / 2;
+	int lastMoveCount = 0;
+	clock_t startTime = clock();
+	int printStep = CLOCKS_PER_SEC;
 
 	bool hasValidMove = true;
 	while (hasValidMove) {
@@ -173,12 +175,12 @@ int main(int argc, char* argv[]) {
 
 		if (hasValidMove == false || clock() - lastPrintTime >= printStep) {
 
-			int kNodesPerSec = ((CLOCKS_PER_SEC * e.nodeCounter) / (1000 * e.cpuTime));
+			int kNodesPerSec = (int)((CLOCKS_PER_SEC * e.nodeCounter) / (1000 * e.cpuTime));
 
 			cout << "Move count: " << moveCount << "\t";
-			cout << "kNodes/s: " << kNodesPerSec << "\t";
-			cout << "Board eval: " << e.evaluateBoard(b) << "\t";
+			cout << "Time: " << (clock() - startTime) / CLOCKS_PER_SEC << "s \t";
 			cout << "Score: " << BoardLogic::calculateScore(b) << "\t";
+			cout << "Board cost: " << e.evaluateBoard(b) << "\t";
 			for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
 				Move move = (Move)(1 << moveIndex);
 				if (move & Move::Down) {
@@ -192,7 +194,13 @@ int main(int argc, char* argv[]) {
 				}
 				cout << (100 * e.moveCounter[moveIndex] / moveCount) << " ";
 			}
-			//cout << " Hash hits: " << (float)e.hashHits / (float)(e.hashHits + e.hashMisses);
+			cout << endl;
+
+			cout << "kNodes/s: " << kNodesPerSec << "\t";
+			cout << "Avg Moves/s: " << (CLOCKS_PER_SEC * moveCount) / (float)(clock() - startTime) << "\t";
+			cout << "Now Moves/s: " << (CLOCKS_PER_SEC * (moveCount - lastMoveCount)) / (float)(clock() - lastPrintTime) << "\t";
+			lastMoveCount = moveCount;
+			cout << "Hash hits: " << (float)e.hashHits / (float)(e.hashHits + e.hashMisses);
 			cout << endl;
 
 			BoardLogic::printBoard(b);

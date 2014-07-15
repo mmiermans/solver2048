@@ -4,6 +4,7 @@
 #include "FastRand.h"
 #include <stdlib.h>
 #include <intrin.h>
+#include <time.h>
 
 #pragma intrinsic(_BitScanReverse64)
 
@@ -52,6 +53,9 @@ public:
 	static void initRng(fastrand* fr) {
 		uint32_t prngSeed[8];
 		uint16_t *sptr = (uint16_t *)prngSeed;
+
+		//srand((unsigned int)(time(NULL) + clock()));
+		srand(0);
 
 		// Randomize the seed values
 		for (uint8_t i = 0; i < 8; i++) {
