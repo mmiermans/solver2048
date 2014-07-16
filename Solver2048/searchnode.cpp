@@ -76,7 +76,7 @@ void SearchNode::generateChildren(Board b) {
 
 	// Perform moves and generate child nodes.
 	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
-		Move move = (Move)(1 << moveIndex);
+		Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
 
 		Board mask; // Mask of the current row/column.
 		int maskShift; // How much to shift the current row column.

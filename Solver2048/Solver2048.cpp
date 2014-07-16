@@ -33,11 +33,8 @@ void playSimpleStrategy() {
 	for (int i = 0; i < 5; i++) {
 		clock_t startTime = clock();
 
-		uint64_t totalSum = 0;
 		uint64_t attempts = 0;
 		uint64_t moveCount = 0;
-		uint64_t maxTotal = 0;
-		uint64_t maxTile = 0;
 		SearchNode* sn = new SearchNode();
 
 		while (startTime + (3 * CLOCKS_PER_SEC) > clock()) {
@@ -54,13 +51,13 @@ void playSimpleStrategy() {
 					if (moves & Move::Up) {
 						b = BoardLogic::performMove(b, Move::Up);
 					} else {
-						Move moveA = Move::Left;
-						Move moveB = Move::Right;
+						Move::MoveEnum moveA = Move::Left;
+						Move::MoveEnum moveB = Move::Right;
 						Tile firstRowLastTile = (b >> (3 * TILE_BITS)) & TILE_MASK;
 						if (firstRowLastTile >= 1) {
 							if (((firstRowLastTile * MASK_ROW_LSB) + 0x0123) == (b & MASK_ROW_FIRST)) {
-								Move moveA = Move::Right;
-								Move moveB = Move::Left;
+								moveA = Move::Right;
+								moveB = Move::Left;
 							}
 						}
 
@@ -129,6 +126,9 @@ void precomputeMoves() {
 }
 
 int main(int argc, char* argv[]) {
+
+	cout << "Hello world!" << endl;
+
 	Board b = 0;
 	Engine e;
 
@@ -136,27 +136,9 @@ int main(int argc, char* argv[]) {
 
 //	playSimpleStrategy();
 
-#if 0
-	// b = 0x0000000102222355;
-	b = 0x0000100000002100;
-	printBoard(b);
-	SearchNode sn;
-	sn.generateChildren(b);
-	printChildBoards(sn);
-	cout << endl;
-	getchar();
-#endif
-
-#if 0
-	b = 0x0000000000002120;
-	BoardLogic::printBoard(b);
-	SearchNode sn;
-	Move bestMove = e.solve(b);
-	getchar();
-#endif
-
 	// Set two random tiles.
 	e.setRandomTile(b);
+#if 0
 	e.setRandomTile(b);
 	int moveCount = 0;
 	clock_t lastPrintTime = 0;
@@ -168,13 +150,13 @@ int main(int argc, char* argv[]) {
 
 	bool hasValidMove = true;
 	while (hasValidMove) {
-		Move bestMove = e.solve(b);
+		Move::MoveEnum bestMove = e.solve(b);
 
 		moveCount++;
 		b = BoardLogic::performMove(b, bestMove);
 		e.setRandomTile(b);
 
-		hasValidMove = (BoardLogic::getValidMoves(b) != (Move)0);
+		hasValidMove = (BoardLogic::getValidMoves(b) != (Move::MoveEnum)0);
 
 		if (e.dfsLookAhead > maxLookAhead)
 			maxLookAhead = e.dfsLookAhead;
@@ -190,7 +172,7 @@ int main(int argc, char* argv[]) {
 			cout << "Score: " << BoardLogic::calculateScore(b) << "\t";
 			cout << "Board cost: " << cost << "\t";
 			for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
-				Move move = (Move)(1 << moveIndex);
+				Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
 				if (move & Move::Down) {
 					cout << "D=";
 				} else if (move & Move::Left) {
@@ -223,7 +205,7 @@ int main(int argc, char* argv[]) {
 	cout << "GAME OVER.";
 
 	getchar();
-
+#endif
 	return 0;
 }
 

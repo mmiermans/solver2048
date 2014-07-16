@@ -1,7 +1,7 @@
 #pragma once
 
 #define ENABLE_HASHING
-//#define CUSTOM_HASHING
+#define CUSTOM_HASHING
 
 #ifdef ENABLE_HASHING
 #ifndef CUSTOM_HASHING
@@ -36,7 +36,7 @@ public:
 	Engine();
 	~Engine();
 
-	Move solve(Board board);
+	Move::MoveEnum solve(Board board);
 
 	void setRandomTile(Board& board);
 	

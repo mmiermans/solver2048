@@ -39,7 +39,7 @@ Engine::~Engine()
 	delete[] nodes;
 }
 
-Move Engine::solve(Board board) {
+Move::MoveEnum Engine::solve(Board board) {
 	clock_t startTime = clock();
 
 #ifdef ENABLE_HASHING
@@ -55,8 +55,6 @@ Move Engine::solve(Board board) {
 
 	float bestScore = MAX_SCORE;
 	int bestMoveIndex = 0;
-
-	int tileSum = BoardLogic::sumTiles(board);
 
 	int maxBadTile = maxTileAfterSequence(board);
 
@@ -86,7 +84,7 @@ Move Engine::solve(Board board) {
 
 	unsigned char validMoves = BoardLogic::getValidMoves(board);
 	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
-		Move move = (Move)(1 << moveIndex);
+		Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
 		if ((validMoves & move) != 0) {
 			if (move == Move::Down) {
 				dfsLookAhead = 1;
@@ -109,7 +107,7 @@ Move Engine::solve(Board board) {
 	cpuTime += (endTime - startTime);
 	dfsLookAhead = baseLookAhead;
 
-	return (Move)(1 << bestMoveIndex);
+	return (Move::MoveEnum)(1 << bestMoveIndex);
 }
 
 float Engine::depthFirstSolve(int index, Board b) {
@@ -127,8 +125,10 @@ float Engine::depthFirstSolve(int index, Board b) {
 	SearchNode& node = nodes[index];
 	node.generateChildren(b);
 
+#ifdef ENABLE_SAMPLING
 	// Divide the 4 random numbers into 8 parts.
 	uint16_t* res16 = (uint16_t*)(fastRng->res);
+#endif
 
 	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
 		for (int v = 0; v < NEW_VALUE_COUNT; v++) {
@@ -333,7 +333,7 @@ int Engine::maxTileAfterSequence(Board b) {
 void Engine::setRandomTile(Board& board) {
 	// Get random numbers
 	FastRand_SSE(fastRng);
-
+#if 0
 	// Get random empty tile.
 	Board emptyMask = BoardLogic::getEmptyMask(board);
 	int emptyCount = BitMath::popCount(emptyMask) / TILE_BITS;
@@ -351,4 +351,5 @@ void Engine::setRandomTile(Board& board) {
 	// 0xe6666666 = 0.9 * 2^32.
 	Tile randomTileValue = (fastRng->res[1] < PROBABILITY_2) ? 1 : 2;
 	BoardLogic::setTile(board, randomEmptyTilePosition, randomTileValue);
+#endif
 }

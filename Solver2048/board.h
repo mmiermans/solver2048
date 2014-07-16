@@ -33,7 +33,7 @@ public:
 
 	static bool hasValidMoves(Board board);
 
-	static Board performMove(Board board, Move move);
+	static Board performMove(Board board, Move::MoveEnum move);
 
 	static inline int sumTiles(Board b) { int score = 0; while (b) { score += (~1) & (1 << (b & TILE_MASK)); b >>= TILE_BITS; } return score; }
 

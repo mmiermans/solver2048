@@ -4,6 +4,11 @@
 /x64
 x64
 Debug
+/Solver2048/Solver2048
+*.o
+*.~
+*.swp
+*.swo
 /*.suo
 /*.sdf
 /*.opensdf

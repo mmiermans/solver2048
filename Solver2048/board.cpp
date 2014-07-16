@@ -126,12 +126,12 @@ bool BoardLogic::hasValidMoves(Board board) {
 	return false;
 }
 
-Board BoardLogic::performMove(Board board, Move move) {
+Board BoardLogic::performMove(Board board, Move::MoveEnum move) {
 	switch (move) {
-		case Left: return moveLeft(board);
-		case Right: return moveRight(board);
-		case Up: return moveUp(board);
-		case Down: return moveDown(board);
+		case Move::Left: return moveLeft(board);
+		case Move::Right: return moveRight(board);
+		case Move::Up: return moveUp(board);
+		case Move::Down: return moveDown(board);
 	}
 	return (Board)board;
 }
