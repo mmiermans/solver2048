@@ -9,7 +9,7 @@
 #include "engine.h"
 #include "searchnode.h"
 
-#define MAX_LOOK_AHEAD 16
+#define MAX_LOOK_AHEAD 11
 #define MAX_SCORE (FLT_MAX)
 
 Engine::Engine()
@@ -54,26 +54,44 @@ Move Engine::solve(Board board) {
 
 	int tileSum = BoardLogic::sumTiles(board);
 
-	unsigned char validMoves = BoardLogic::getValidMoves(board);
+	int maxBadTile = maxTileAfterSequence(board);
 
+	int baseLookAhead = fmin(8, fmax(3, maxBadTile - 3));
+	if (BoardLogic::getTile(board, 0, 0) == 0) {
+		baseLookAhead = 1;
+	}
+	// Increase lookahead in case of locked rows.
+	Board selectedRows = MASK_ROW_FIRST;
+	for (int i = 2; i < BOARD_SIZE; i++) {
+		selectedRows <<= ROW_BITS;
+		selectedRows |= ROW_MASK;
+		unsigned char moves = BoardLogic::getValidMoves(board & selectedRows);
+		bool hasEmptyTiles = BoardLogic::hasEmptyTile(board | ~selectedRows);
+		if ((moves & ~Move::Down) == 0 && hasEmptyTiles == false) {
+			baseLookAhead += 2;
+		}
+	}
+
+	// Bind lookahead to valid range
+	if (baseLookAhead > MAX_LOOK_AHEAD - 1) {
+		baseLookAhead = MAX_LOOK_AHEAD - 1;
+	} else if (baseLookAhead < 1) {
+		baseLookAhead = 1;
+	}
+	//std::cout << baseLookAhead << std::endl;
+
+	unsigned char validMoves = BoardLogic::getValidMoves(board);
 	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
 		Move move = (Move)(1 << moveIndex);
 		if ((validMoves & move) != 0) {
-			int t = tileSum / 768;
-			dfsLookAhead = 2;
-			if (move != Move::Down) {
-				while (t > 0 && dfsLookAhead < 5) {
-					dfsLookAhead++;
-					t /= 2;
-				}
+			if (move == Move::Down) {
+				dfsLookAhead = 1;
+			} else {
+				dfsLookAhead = baseLookAhead;
 			}
-			if (dfsLookAhead > MAX_LOOK_AHEAD) {
-				dfsLookAhead = MAX_LOOK_AHEAD;
-			}
-
 
 			Board movedBoard = BoardLogic::performMove(board, move);
-			float score = depthFirstSolve(0, movedBoard, 0);
+			float score = depthFirstSolve(0, movedBoard);
 			if (bestScore > score) {
 				bestScore = score;
 				bestMoveIndex = moveIndex;
@@ -85,14 +103,14 @@ Move Engine::solve(Board board) {
 
 	clock_t endTime = clock();
 	cpuTime += (endTime - startTime);
+	dfsLookAhead = baseLookAhead;
 
 	return (Move)(1 << bestMoveIndex);
 }
 
-float Engine::depthFirstSolve(int index, Board b, float scoreSum) {
-	float bScore = (float)evaluateBoard(b);
+float Engine::depthFirstSolve(int index, Board b) {
 	if (BoardLogic::hasEmptyTile(b) == false) {
-		return bScore;
+		return (float)evaluateBoard(b);
 	}
 
 	float scores[BOARD_SIZE_SQ][NEW_VALUE_COUNT];
@@ -104,7 +122,6 @@ float Engine::depthFirstSolve(int index, Board b, float scoreSum) {
 
 	SearchNode& node = nodes[index];
 	node.generateChildren(b);
-	float childScoreSum = scoreSum + bScore;
 
 	// Divide the 4 random numbers into 8 parts.
 	uint16_t* res16 = (uint16_t*)(fastRng->res);
@@ -172,7 +189,7 @@ float Engine::depthFirstSolve(int index, Board b, float scoreSum) {
 
 						hashHits++;
 					} else {
-						score = depthFirstSolve(index + 1, childNode.board, childScoreSum);
+						score = depthFirstSolve(index + 1, childNode.board);
 
 #ifdef CUSTOM_HASHING
 						boardHashTable.put(childNode.board, score);
@@ -226,14 +243,15 @@ float Engine::depthFirstSolve(int index, Board b, float scoreSum) {
 }
 
 uint32_t Engine::evaluateBoard(Board b) {
-	int score;
 
-	// Subtract penalty for 'game over' board.
-	if (BoardLogic::hasEmptyTile(b) == false) {
-		score = 1 << 15;
-	} else {
-		score = 0;
+	if (BoardLogic::hasValidMoves(b) == false) {
+		return 1 << 14;
 	}
+
+	Board previousTile = b & TILE_MASK;
+	// If first tile is empty, ignore first two tiles.
+	if (previousTile == 0)
+		b >>= TILE_BITS;
 
 	// Flip odd rows
 #if BOARD_SIZE == 4
@@ -244,6 +262,45 @@ uint32_t Engine::evaluateBoard(Board b) {
 		((b & 0xF0000000F0000000) >> 12);
 #else
 	#error TODO: implement for case != 4
+#endif
+
+	uint32_t score = 0;
+	// Find first tile that is lower than its previous tile.
+	while (b != 0) {
+		b >>= TILE_BITS;
+		Board tile = b & TILE_MASK;
+
+		if (tile > previousTile) {
+			break;
+		}
+
+		previousTile = tile;
+	}
+
+	// Sum all subsequent tiles.
+	while (b != 0) {
+		int tile = (b & TILE_MASK);
+		score += (1 << tile) - 1;
+		b >>= TILE_BITS;
+	}
+
+	return score;
+}
+
+int Engine::maxTileAfterSequence(Board b) {
+	int maxTile = 0;
+	if (BoardLogic::hasValidMoves(b) == false)
+		return 1;
+
+	// Flip odd rows
+#if BOARD_SIZE == 4
+	b = (b & 0x0000FFFF0000FFFF) |
+		((b & 0x000F0000000F0000) << 12) |
+		((b & 0x00F0000000F00000) << 4) |
+		((b & 0x0F0000000F000000) >> 4) |
+		((b & 0xF0000000F0000000) >> 12);
+#else
+#error TODO: implement for case != 4
 #endif
 
 	// Find first tile that is lower than its previous tile.
@@ -262,11 +319,12 @@ uint32_t Engine::evaluateBoard(Board b) {
 	// Sum all subsequent tiles.
 	while (b != 0) {
 		int tile = (b & TILE_MASK);
-		score += tile * (1 << tile);
+		if (tile > maxTile) maxTile = tile;
 		b >>= TILE_BITS;
 	}
 
-	return score;
+	return maxTile;
+
 }
 
 void Engine::setRandomTile(Board& board) {

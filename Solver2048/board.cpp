@@ -98,6 +98,34 @@ unsigned char BoardLogic::getValidMoves(Board board) {
 	return validMoves;
 }
 
+/// <summary>
+/// Determines whether a move is possible
+/// </summary>
+/// <returns>True if at least one move is possible</returns>
+bool BoardLogic::hasValidMoves(Board board) {
+	if (hasEmptyTile(board) != 0) {
+		return true;
+	}
+
+	// BoardLogic where non-empty tiles are 0 and empty tile bits are high.
+	Board e = getEmptyMask(board);
+	Board eq;
+
+	// In eq, tiles with a non-empty equal tile to the right are 0.
+	eq = MASK_COL_LAST | e | (board ^ (board >> TILE_BITS));
+	if (hasEmptyTile(eq) != 0) {
+		return true;
+	}
+
+	// In eq, tiles with a non-empty equal tile below are 0.
+	eq = e | (board ^ (board >> ROW_BITS));
+	if (hasEmptyTile(eq) != 0) {
+		return true;
+	}
+
+	return false;
+}
+
 Board BoardLogic::performMove(Board board, Move move) {
 	switch (move) {
 		case Left: return moveLeft(board);

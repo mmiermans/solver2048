@@ -54,8 +54,7 @@ public:
 		uint32_t prngSeed[8];
 		uint16_t *sptr = (uint16_t *)prngSeed;
 
-		//srand((unsigned int)(time(NULL) + clock()));
-		srand(0);
+		srand((unsigned int)(time(NULL) + clock()));
 
 		// Randomize the seed values
 		for (uint8_t i = 0; i < 8; i++) {

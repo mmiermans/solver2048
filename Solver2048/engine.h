@@ -55,6 +55,8 @@ private:
 	hash_t scoreMap;
 	BoardHashTable boardHashTable;
 
-	float depthFirstSolve(int index, Board b, float scoreSum);
+	float depthFirstSolve(int index, Board b);
+
+	int maxTileAfterSequence(Board b);
 };
 

@@ -160,8 +160,10 @@ int main(int argc, char* argv[]) {
 	int moveCount = 0;
 	clock_t lastPrintTime = 0;
 	int lastMoveCount = 0;
+	int lastCost = 0;
 	clock_t startTime = clock();
 	int printStep = CLOCKS_PER_SEC;
+	int maxLookAhead = 0;
 
 	bool hasValidMove = true;
 	while (hasValidMove) {
@@ -173,14 +175,19 @@ int main(int argc, char* argv[]) {
 
 		hasValidMove = (BoardLogic::getValidMoves(b) != (Move)0);
 
-		if (hasValidMove == false || clock() - lastPrintTime >= printStep) {
+		if (e.dfsLookAhead > maxLookAhead)
+			maxLookAhead = e.dfsLookAhead;
 
-			int kNodesPerSec = (int)((CLOCKS_PER_SEC * e.nodeCounter) / (1000 * e.cpuTime));
+		int cost = e.evaluateBoard(b);
+
+		if (cost - lastCost > 1024 || hasValidMove == false || clock() - lastPrintTime >= printStep) {
+
+			int kNodesPerSec = e.cpuTime == 0 ? 9999 : (int)((CLOCKS_PER_SEC * e.nodeCounter) / (1000 * e.cpuTime));
 
 			cout << "Move count: " << moveCount << "\t";
 			cout << "Time: " << (clock() - startTime) / CLOCKS_PER_SEC << "s \t";
 			cout << "Score: " << BoardLogic::calculateScore(b) << "\t";
-			cout << "Board cost: " << e.evaluateBoard(b) << "\t";
+			cout << "Board cost: " << cost << "\t";
 			for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
 				Move move = (Move)(1 << moveIndex);
 				if (move & Move::Down) {
@@ -196,17 +203,19 @@ int main(int argc, char* argv[]) {
 			}
 			cout << endl;
 
-			cout << "kNodes/s: " << kNodesPerSec << "\t";
+			cout << "Lookahead: " << maxLookAhead << "\t";
+			maxLookAhead = 0;
 			cout << "Avg Moves/s: " << (CLOCKS_PER_SEC * moveCount) / (float)(clock() - startTime) << "\t";
 			cout << "Now Moves/s: " << (CLOCKS_PER_SEC * (moveCount - lastMoveCount)) / (float)(clock() - lastPrintTime) << "\t";
 			lastMoveCount = moveCount;
+			cout << "kNodes/s: " << kNodesPerSec << "\t";
 			cout << "Hash hits: " << (float)e.hashHits / (float)(e.hashHits + e.hashMisses);
 			cout << endl;
 
 			BoardLogic::printBoard(b);
 			cout << endl;
 			lastPrintTime = clock();
-
+			lastCost = cost;
 		}
 	}
 
