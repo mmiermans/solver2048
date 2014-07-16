@@ -13,13 +13,17 @@
 #define MAX_SCORE (FLT_MAX)
 
 Engine::Engine()
+#ifdef GOOGLE_HASHING
 	: scoreMap(1<<20)
+#endif
 {
 	fastRng = new fastrand;
 	BitMath::initRng(fastRng);
 
+#ifdef GOOGLE_HASHING
 	scoreMap.set_empty_key(-1);
 	//scoreMap.max_load_factor(0.25);
+#endif
 
 	nodes = new SearchNode[MAX_LOOK_AHEAD];
 
@@ -56,7 +60,7 @@ Move Engine::solve(Board board) {
 
 	int maxBadTile = maxTileAfterSequence(board);
 
-	int baseLookAhead = fmin(8, fmax(3, maxBadTile - 3));
+	int baseLookAhead = (int)fmin(8, fmax(3, maxBadTile - 3));
 	if (BoardLogic::getTile(board, 0, 0) == 0) {
 		baseLookAhead = 1;
 	}
@@ -66,7 +70,7 @@ Move Engine::solve(Board board) {
 		selectedRows <<= ROW_BITS;
 		selectedRows |= ROW_MASK;
 		unsigned char moves = BoardLogic::getValidMoves(board & selectedRows);
-		bool hasEmptyTiles = BoardLogic::hasEmptyTile(board | ~selectedRows);
+		bool hasEmptyTiles = (BoardLogic::hasEmptyTile(board | ~selectedRows) != 0);
 		if ((moves & ~Move::Down) == 0 && hasEmptyTiles == false) {
 			baseLookAhead += 2;
 		}
@@ -211,7 +215,6 @@ float Engine::depthFirstSolve(int index, Board b) {
 				for (int p = 0; p < 4 && childNode.positions[p] >= 0; p++) {
 					int position = childNode.positions[p];
 					if (position >= 0) {
-						assert(position < BOARD_SIZE_SQ);
 						float& oldScore = scores[position][v];
 						if (oldScore > score)
 							oldScore = score;

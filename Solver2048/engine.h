@@ -1,25 +1,34 @@
 #pragma once
 
-#include <time.h>
+#define ENABLE_HASHING
+//#define CUSTOM_HASHING
 
-#include <sparsehash/internal/sparseconfig.h>
-#include <sparsehash/dense_hash_map>
+#ifdef ENABLE_HASHING
+#ifndef CUSTOM_HASHING
+#define GOOGLE_HASHING
+#endif
+#endif
+
+//#define ENABLE_SAMPLING
+
+#include <time.h>
 
 #include "bitmath.h"
 #include "board.h"
 #include "direction.h"
 #include "searchnode.h"
-#include "boardhashtable.h"
 
 // TEST
 #include <map>
 #include <vector>
 
+#ifdef CUSTOM_HASHING
+#include "boardhashtable.h"
+#else
+#include <sparsehash/internal/sparseconfig.h>
+#include <sparsehash/dense_hash_map>
 typedef google::dense_hash_map<Board, float> hash_t;
-
-#define ENABLE_HASHING
-//#define CUSTOM_HASHING
-//#define ENABLE_SAMPLING
+#endif
 
 class Engine
 {
@@ -52,8 +61,12 @@ private:
 
 	fastrand* fastRng;
 	SearchNode* nodes;
-	hash_t scoreMap;
+
+#ifdef CUSTOM_HASHING
 	BoardHashTable boardHashTable;
+#else
+	hash_t scoreMap;
+#endif
 
 	float depthFirstSolve(int index, Board b);
 
