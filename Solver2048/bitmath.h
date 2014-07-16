@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include "FastRand.h"
 #include <stdlib.h>
-#include <intrin.h>
 #include <time.h>
 
 #pragma intrinsic(_BitScanReverse64)
