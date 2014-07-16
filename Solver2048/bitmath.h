@@ -18,16 +18,6 @@ public:
 	}
 
 	/// <summary>
-	/// Integer Log2.
-	/// </summary>
-	/// <returns>Log2 of x. Result for log2(0) is undefined.</returns>
-	static inline unsigned __int64 log2(const uint64_t x) {
-		unsigned long result;
-		_BitScanReverse64(&result, x);
-		return result;
-	}
-
-	/// <summary>
 	/// Counts the number of 1's using the super-fast Hamming weight algorithm.
 	/// </summary>
 	/// <returns>Number of high bits in x.</returns>

@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <string>
 #include <time.h>
+#include <math.h>
 
 #include "board.h"
 #include "engine.h"
@@ -21,7 +22,7 @@ void askTile(Board& board) {
 	cin >> x;
 	cin >> y;
 	cin >> tile;
-	tile = BitMath::log2(tile);
+	tile = (Tile)round(log2((double)tile));
 	BoardLogic::setTile(board, x, y, tile);
 }
 
