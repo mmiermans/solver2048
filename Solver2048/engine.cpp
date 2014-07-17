@@ -333,7 +333,6 @@ int Engine::maxTileAfterSequence(Board b) {
 void Engine::setRandomTile(Board& board) {
 	// Get random numbers
 	FastRand_SSE(fastRng);
-#if 0
 	// Get random empty tile.
 	Board emptyMask = BoardLogic::getEmptyMask(board);
 	int emptyCount = BitMath::popCount(emptyMask) / TILE_BITS;
@@ -351,5 +350,4 @@ void Engine::setRandomTile(Board& board) {
 	// 0xe6666666 = 0.9 * 2^32.
 	Tile randomTileValue = (fastRng->res[1] < PROBABILITY_2) ? 1 : 2;
 	BoardLogic::setTile(board, randomEmptyTilePosition, randomTileValue);
-#endif
 }

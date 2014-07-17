@@ -1,29 +1,59 @@
-OBJS = board.o engine.o searchnode.o Solver2048.o
-CC = g++
-DEBUG = -g
-CFLAGS = -c $(DEBUG) -msse -msse2 -msse3 -msse4 -std=c++11 # -march= -mfpmath=sse
-LFLAGS = $(DEBUG)
+SHELL = /bin/sh
+CC    = g++
 
-debug : $(OBJS)
-	$(CC) $(LFLAGS) $(OBJS) -o Solver2048
+FLAGS        = -msse -msse2 -msse3 -msse4 -std=c++11
+CFLAGS       = -Wall -march=native
+DEBUGFLAGS   = -O0 -g -D _DEBUG
+RELEASEFLAGS = -O3
+LFLAGS       = $(DEBUG)
 
-bitmath : FastRand.h
+TARGET  = Solver2048
+SOURCES = $(shell echo *.cpp)
+COMMON  = bitmath.h board.h direction.h engine.h
+HEADERS = $(shell echo *.h)
+OBJECTS = $(SOURCES:.cpp=.o)
 
-DEPS_BOARD_H = board.h precomputedmoves.h bitmath.h direction.h boardconstants.h
-board.o : board.cpp $(DEPS_BOARD_H) 
-	$(CC) $(CFLAGS) board.cpp
+PREFIX = $(DESTDIR)/usr/local
+BINDIR = $(PREFIX)/bin
 
-DEPS_SEARCHNODE_H = searchnode.h $(DEPS_BOARD_H)
-searchnode.o : searchnode.cpp $(DEPS_SEARCHNODE_H)
-	$(CC) $(CFLAGS) searchnode.cpp
+all : $(TARGET)
+debug : $(TARGET)
 
-DEPS_ENGINE_H = engine.h boardhashtable.h $(DEPS_SEARCHNODE_H)
-engine.o : engine.cpp $(DEPS_ENGINE_H)
-	$(CC) $(CFLAGS) engine.cpp
+$(TARGET): $(OBJECTS) $(COMMON)
+	$(CC) $(FLAGS) $(CFLAGS) $(DEBUGFLAGS) -o $(TARGET) $(OBJECTS)
 
-Solver2048.o : Solver2048.cpp $(DEPS_ENGINE_H)
-	$(CC) $(CFLAGS) Solver2048.cpp
+release : $(SOURCES) $(HEADERS) $(COMMON)
+	$(CC) $(FLAGS) $(CFLAGS) $(RELEASEFLAGS) -o $(TARGET) $(SOURCES)
+
+profile: CFLAGS += -pg
+profile: $(TARGET)
+ 
+ 
+install: release
+	install -D $(TARGET) $(BINDIR)/$(TARGET)
+ 
+install-strip: release
+	install -D -s $(TARGET) $(BINDIR)/$(TARGET)
+ 
+uninstall:
+	-rm $(BINDIR)/$(TARGET)
+
 
 clean:
-	\rm *.o *~ p1
+	-rm -f $(OBJECTS)
+	-rm -f gmon.out
+ 
+distclean: clean
+	-rm -f $(TARGET)
+
+
+.SECONDEXPANSION:
+
+%.o: %.cpp $(HEADERS) $(COMMON)
+	$(CC) $(FLAGS) $(CFLAGS) $(DEBUGFLAGS) -c -o $@ $<
+
+
+.PHONY : all profile release \
+	install install-strip uninstall clean distclean
+
 

@@ -127,8 +127,6 @@ void precomputeMoves() {
 
 int main(int argc, char* argv[]) {
 
-	cout << "Hello world!" << endl;
-
 	Board b = 0;
 	Engine e;
 
@@ -138,7 +136,7 @@ int main(int argc, char* argv[]) {
 
 	// Set two random tiles.
 	e.setRandomTile(b);
-#if 0
+
 	e.setRandomTile(b);
 	int moveCount = 0;
 	clock_t lastPrintTime = 0;
@@ -205,7 +203,7 @@ int main(int argc, char* argv[]) {
 	cout << "GAME OVER.";
 
 	getchar();
-#endif
+
 	return 0;
 }
 
