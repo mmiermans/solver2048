@@ -1,6 +1,11 @@
 #pragma once
 #include <stdint.h>
 
+// Check if we're on 32-bit
+#if UINTPTR_MAX == 0xffffffff
+#error "Requires 64-bit"
+#endif
+
 typedef uint64_t Board;
 typedef uint64_t Tile;
 
