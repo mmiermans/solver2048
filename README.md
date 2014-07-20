@@ -29,7 +29,7 @@ Lookahead: 3	Avg Moves/s: 40.8155	Moves/s: 39.1436	kNodes/s: 2424
 
 ### Windows
 
-Very easy: open the `.sln` solution file. Build in release mode to get the best performance.
+Open the `.sln` solution file. Build in release mode to get the best performance.
 
 ### Linux
 
@@ -47,7 +47,7 @@ git clone https://github.com/mmiermans/solver2048.git
 
 This will create a directory called `solver2048`. Now you have the choice to use Eclipse or the command line to build the application.
 
-If you like to use the command line, then `cd solver2048/Solver2048`. Simply run `make` or `make release` to generate an executable. The latter generates an executable with a better performance, while the former is more suitable for debugging purposes. Start the game engine with `./Solver2048`.
+If you like to use the command line, then navigate to the project directory with `cd solver2048/Solver2048`. Simply run `make` or `make release` to generate an executable. The `release` target compiles with the higher `-O3` optimization option enabled. Start the game engine with `./Solver2048`.
 
 If your preference is to use Eclipse, then open Eclipse and import the project from `solver2048/Solver2048`. There are two possible Build Configurations: `Debug` and `Release`. The former can be debugged more easily and the latter is optimized for performance. You can select the Build Configuration as follows:
 
