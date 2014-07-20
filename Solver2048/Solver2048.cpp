@@ -145,6 +145,7 @@ int main(int argc, char* argv[]) {
 	clock_t startTime = clock();
 	int printStep = CLOCKS_PER_SEC;
 	int maxLookAhead = 0;
+	clock_t currentTime;
 
 	bool hasValidMove = true;
 	while (hasValidMove) {
@@ -161,41 +162,28 @@ int main(int argc, char* argv[]) {
 
 		int cost = e.evaluateBoard(b);
 
-		if (cost - lastCost > 1024 || hasValidMove == false || clock() - lastPrintTime >= printStep) {
-
-			int kNodesPerSec = e.cpuTime == 0 ? 9999 : (int)((CLOCKS_PER_SEC * e.nodeCounter) / (1000 * e.cpuTime));
-
-			cout << "Move count: " << moveCount << "\t";
-			cout << "Time: " << (clock() - startTime) / CLOCKS_PER_SEC << "s \t";
+		currentTime = clock();
+		if (cost - lastCost > 1024 || hasValidMove == false || currentTime - lastPrintTime >= printStep) {
+			// Game statistics
+			cout << "Moves: " << moveCount << "\t";
+			cout << "Time: " << (currentTime - startTime) / CLOCKS_PER_SEC << "s\t";
 			cout << "Score: " << BoardLogic::calculateScore(b) << "\t";
-			cout << "Board cost: " << cost << "\t";
-			for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
-				Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
-				if (move & Move::Down) {
-					cout << "D=";
-				} else if (move & Move::Left) {
-					cout << "L=";
-				} else if (move & Move::Right) {
-					cout << "R=";
-				} else if (move & Move::Up) {
-					cout << "U=";
-				}
-				cout << (100 * e.moveCounter[moveIndex] / moveCount) << " ";
-			}
+			cout << "BoardCost: " << cost;
 			cout << endl;
 
-			cout << "Lookahead: " << maxLookAhead << "\t";
+			// Engine performance statistics
+			cout << "LookAhead: " << maxLookAhead << "\t";
 			maxLookAhead = 0;
-			cout << "Avg Moves/s: " << (CLOCKS_PER_SEC * moveCount) / (float)(clock() - startTime) << "\t";
-			cout << "Now Moves/s: " << (CLOCKS_PER_SEC * (moveCount - lastMoveCount)) / (float)(clock() - lastPrintTime) << "\t";
+			cout << "Moves/s: " << (CLOCKS_PER_SEC * (moveCount - lastMoveCount)) / (float)(currentTime - lastPrintTime) << "\t";
+			cout << "AvgMoves/s: " << (CLOCKS_PER_SEC * moveCount) / (float)(currentTime - startTime) << "\t";
 			lastMoveCount = moveCount;
+			int kNodesPerSec = e.cpuTime == 0 ? 9999 : (int)((CLOCKS_PER_SEC * e.nodeCounter) / (1000 * e.cpuTime));
 			cout << "kNodes/s: " << kNodesPerSec << "\t";
-			cout << "Hash hits: " << (float)e.hashHits / (float)(e.hashHits + e.hashMisses);
 			cout << endl;
 
 			BoardLogic::printBoard(b);
 			cout << endl;
-			lastPrintTime = clock();
+			lastPrintTime = currentTime;
 			lastCost = cost;
 		}
 	}
