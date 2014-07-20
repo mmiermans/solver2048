@@ -49,6 +49,6 @@ This will create a directory called `solver2048`. Now you have the choice to use
 
 If you like to use the command line, then `cd solver2048/Solver2048`. Simply run `make` or `make release` to generate an executable. The latter generates an executable with a better performance, while the former is more suitable for debugging purposes. Start the game engine with `./Solver2048`.
 
-If your preference is to use Eclipse, then open Eclipse and import the project from `solver2048/Solver2048`. There are two targets: `Debug` and `Release`. The former can be debugged more easily and the latter is optimized for performance. You can select the Build configuration as follows:
+If your preference is to use Eclipse, then open Eclipse and import the project from `solver2048/Solver2048`. There are two possible Build Configurations: `Debug` and `Release`. The former can be debugged more easily and the latter is optimized for performance. You can select the Build Configuration as follows:
 
 <img src="https://raw.githubusercontent.com/mmiermans/solver2048/master/doc/eclipse_build_configurations_dialog.png" alt="Eclipse Build configuration" width="400px"/>
