@@ -39,6 +39,8 @@ public:
 	Move::MoveEnum solve(Board board);
 
 	void setRandomTile(Board& board);
+
+	void getRandomTile(Board board, int& position, Tile& value);
 	
 	/// <summary>
 	/// Calculates a cost for a given board

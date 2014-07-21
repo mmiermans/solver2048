@@ -22,10 +22,10 @@ Engine::Engine()
 
 #ifdef GOOGLE_HASHING
 	scoreMap.set_empty_key(-1);
-	//scoreMap.max_load_factor(0.25);
 #endif
 
 	nodes = new SearchNode[MAX_LOOK_AHEAD];
+	dfsLookAhead = 2;
 
 	moveCounter[0] = 0;
 	moveCounter[1] = 0;
@@ -331,8 +331,16 @@ int Engine::maxTileAfterSequence(Board b) {
 }
 
 void Engine::setRandomTile(Board& board) {
+	int position = 0;
+	Tile value = 0;
+	getRandomTile(board, position, value);
+	BoardLogic::setTile(board, position, value);
+}
+
+void Engine::getRandomTile(Board board, int& position, Tile& value) {
 	// Get random numbers
 	FastRand_SSE(fastRng);
+
 	// Get random empty tile.
 	Board emptyMask = BoardLogic::getEmptyMask(board);
 	int emptyCount = BitMath::popCount(emptyMask) / TILE_BITS;
@@ -347,7 +355,8 @@ void Engine::setRandomTile(Board& board) {
 	}
 
 	// Get random tile value with P(2|0.9) and P(4|0.1).
-	// 0xe6666666 = 0.9 * 2^32.
 	Tile randomTileValue = (fastRng->res[1] < PROBABILITY_2) ? 1 : 2;
-	BoardLogic::setTile(board, randomEmptyTilePosition, randomTileValue);
+
+	position = randomEmptyTilePosition;
+	value = randomTileValue;
 }

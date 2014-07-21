@@ -7,12 +7,16 @@
 #include <time.h>
 #include <math.h>
 
+#include "mysqlconnector.h"
+
 #include "board.h"
 #include "engine.h"
 #include "searchnode.h"
 #include "bitmath.h"
 
 using namespace std;
+
+#define ENABLE_STDOUT
 
 void askTile(Board& board) {
 	int x = 0;
@@ -126,19 +130,23 @@ void precomputeMoves() {
 }
 
 int main(int argc, char* argv[]) {
+#ifdef ENABLE_MYSQL
+	MySqlConnector mySqlConnector;
+#endif
 
-	Board b = 0;
 	Engine e;
 
-//	precomputeMoves();
-
-//	playSimpleStrategy();
-
-	// Set two random tiles.
-	e.setRandomTile(b);
-
-	e.setRandomTile(b);
+	Board b = 0;
 	int moveCount = 0;
+	mySqlConnector.startGame(b, moveCount);
+
+	// Set two random tiles if this is a new game.
+	if (b == 0) {
+		e.setRandomTile(b);
+		e.setRandomTile(b);
+	}
+
+	// Debug variables
 	clock_t lastPrintTime = 0;
 	int lastMoveCount = 0;
 	int lastCost = 0;
@@ -147,21 +155,29 @@ int main(int argc, char* argv[]) {
 	int maxLookAhead = 0;
 	clock_t currentTime;
 
+	// Main game loop
 	bool hasValidMove = true;
 	while (hasValidMove) {
+		// Let game engine perform evaluation on board b.
 		Move::MoveEnum bestMove = e.solve(b);
 
+		// Execute move.
 		moveCount++;
 		b = BoardLogic::performMove(b, bestMove);
-		e.setRandomTile(b);
+		// Insert new random tile.
+		int newTilePosition = 0;
+		Tile newTileValue = 0;
+		e.getRandomTile(b, newTilePosition, newTileValue);
+		BoardLogic::setTile(b, newTilePosition, newTileValue);
 
+		// Gameover?
 		hasValidMove = (BoardLogic::getValidMoves(b) != (Move::MoveEnum)0);
 
+#ifdef ENABLE_STDOUT
+		// Debug info
 		if (e.dfsLookAhead > maxLookAhead)
 			maxLookAhead = e.dfsLookAhead;
-
 		int cost = e.evaluateBoard(b);
-
 		currentTime = clock();
 		if (cost - lastCost > 1024 || hasValidMove == false || currentTime - lastPrintTime >= printStep) {
 			// Game statistics
@@ -186,6 +202,7 @@ int main(int argc, char* argv[]) {
 			lastPrintTime = currentTime;
 			lastCost = cost;
 		}
+#endif
 	}
 
 	cout << "GAME OVER.";

@@ -1,11 +1,11 @@
 SHELL = /bin/sh
 CC    = g++
 
-FLAGS        = -msse -msse2 -msse3 -msse4 -std=c++11
+MYSQLFLAGS   = -I/usr/include/mysql -DBIG_JOINS=1 -fno-strict-aliasing -DNDEBUG -L/usr/lib/x86_64-linux-gnu -lmysqlclient -lpthread -lz -lm -ldl
 CFLAGS       = -Wall -march=native
+FLAGS        = -msse -msse2 -msse3 -msse4 -std=c++11 $(MYSQLFLAGS) $(CFLAGS)
 DEBUGFLAGS   = -O0 -g -D _DEBUG
 RELEASEFLAGS = -O3
-LFLAGS       = $(DEBUG)
 
 TARGET  = Solver2048
 SOURCES = $(shell echo *.cpp)
@@ -20,10 +20,10 @@ all : $(TARGET)
 debug : $(TARGET)
 
 $(TARGET): $(OBJECTS) $(COMMON)
-	$(CC) $(FLAGS) $(CFLAGS) $(DEBUGFLAGS) -o $(TARGET) $(OBJECTS)
+	$(CC) -o $(TARGET) $(OBJECTS) $(FLAGS) $(DEBUGFLAGS)
 
 release : $(SOURCES) $(HEADERS) $(COMMON)
-	$(CC) $(FLAGS) $(CFLAGS) $(RELEASEFLAGS) -o $(TARGET) $(SOURCES)
+	$(CC) -o $(TARGET) $(SOURCES) $(FLAGS) $(RELEASEFLAGS)
 
 profile: CFLAGS += -pg
 profile: $(TARGET)
@@ -50,7 +50,7 @@ distclean: clean
 .SECONDEXPANSION:
 
 %.o: %.cpp $(HEADERS) $(COMMON)
-	$(CC) $(FLAGS) $(CFLAGS) $(DEBUGFLAGS) -c -o $@ $<
+	$(CC) -c -o $@ $< $(FLAGS) $(DEBUGFLAGS)
 
 
 .PHONY : all profile release \
