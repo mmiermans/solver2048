@@ -162,6 +162,7 @@ int main(int argc, char* argv[]) {
 		Move::MoveEnum bestMove = e.solve(b);
 
 		// Execute move.
+		Board boardBefore = b;
 		moveCount++;
 		b = BoardLogic::performMove(b, bestMove);
 		// Insert new random tile.
@@ -173,6 +174,20 @@ int main(int argc, char* argv[]) {
 		// Gameover?
 		hasValidMove = (BoardLogic::getValidMoves(b) != (Move::MoveEnum)0);
 
+		int score = BoardLogic::calculateScore(b);
+		int maxTile = BoardLogic::maxTile(b);
+
+		// Add move to MySQL database
+		mySqlConnector.insertMove(
+				boardBefore,
+				b,
+				bestMove,
+				newTilePosition / TILE_BITS,
+				1 << newTileValue,
+				score,
+				maxTile,
+				!hasValidMove);
+
 #ifdef ENABLE_STDOUT
 		// Debug info
 		if (e.dfsLookAhead > maxLookAhead)
@@ -183,7 +198,7 @@ int main(int argc, char* argv[]) {
 			// Game statistics
 			cout << "Moves: " << moveCount << "\t";
 			cout << "Time: " << (currentTime - startTime) / CLOCKS_PER_SEC << "s\t";
-			cout << "Score: " << BoardLogic::calculateScore(b) << "\t";
+			cout << "Score: " << score << "\t";
 			cout << "BoardCost: " << cost;
 			cout << endl;
 

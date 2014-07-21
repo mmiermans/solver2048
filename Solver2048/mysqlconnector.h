@@ -13,6 +13,7 @@
 #define MYSQLCONNECTOR_H_
 
 #include <string>
+#include <map>
 
 #if !defined(max)
 #define max max
@@ -30,7 +31,15 @@ public:
 
 	void startGame(Board& board, int& moveCount);
 
-	void insertMove(Board before, Move::MoveEnum move, int newTileValue, int newTilePosition, bool hasEnded);
+	void insertMove(
+			Board before,
+			Board after,
+			Move::MoveEnum move,
+			int newTilePosition,
+			int newTileValue,
+			int score,
+			int maxTile,
+			bool hasEnded);
 
 	void flush();
 
@@ -40,9 +49,19 @@ private:
 	int gameId;
 	int moveCount;
 
-	std::string moveBuffer;
+	std::string movesBuffer;
+	int movesBufferCount;
+	clock_t movesBufferFlushTime;
+	const int movesBufferCountTrigger = 512;
+	const clock_t movesBufferTimeTrigger = 4;
 
-	void finish_with_error(MYSQL *con);
+	void updateGame(int score, int maxTile, bool hasEnded, Board board);
+
+	std::string getSqlMoveEnum(Move::MoveEnum move);
+
+	void flushInsertMovesBuffer();
+
+	void throwMySqlException();
 };
 
 #endif /* MYSQLCONNECTOR_H_ */
