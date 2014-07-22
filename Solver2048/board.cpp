@@ -346,3 +346,21 @@ Board BoardLogic::getEmptyMask(Board b) {
 Board BoardLogic::hasEmptyTile(Board b) {
 	return (b - MASK_TILES_LSB) & (~b) & MASK_TILES_MSB;
 }
+
+int BoardLogic::calculateScore(Board b, int moveCount) {
+	int score = 0;
+	int tileSum = 0;
+	while (b) {
+		Tile t = (b & TILE_MASK);
+		if (t > 0) {
+			score += (t - 1) * (1 << t);
+			tileSum += t;
+		}
+		b >>= TILE_BITS;
+	}
+
+	// Correct for 4-tiles that were inserted.
+	int loss = 2 * (tileSum - (2 * moveCount) - 4);
+
+	return score - loss;
+}

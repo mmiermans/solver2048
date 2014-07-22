@@ -175,7 +175,7 @@ int main(int argc, char* argv[]) {
 		// Gameover?
 		hasValidMove = (BoardLogic::getValidMoves(b) != (Move::MoveEnum)0);
 
-		int score = BoardLogic::calculateScore(b);
+		int score = BoardLogic::calculateScore(b, moveCount);
 		int maxTile = BoardLogic::maxTile(b);
 
 		// Add move to MySQL database

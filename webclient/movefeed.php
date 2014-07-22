@@ -5,6 +5,12 @@ if ($mysqli->connect_errno) {
     echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
 }
 
+if (isset($_GET["limit"])) {
+	$limit = $_GET["limit"];
+} else {
+	$limit = 10;
+}
+
 if (isset($_GET["movecount"])) {
 	$move_count = $_GET["movecount"];
 } else {
@@ -25,10 +31,26 @@ if (isset($_GET["gameid"])) {
 }
 
 // Prepare statement
-$stmt = $mysqli->prepare("SELECT `id`, `game_id`, Cast(`board_before_move` as char), `move_direction`, `move_count`, `new_tile_value`, `new_tile_position` FROM moves WHERE game_id=(?) AND move_count>=(?)");
+$query = <<<EOT
+  SELECT * FROM
+  (
+    SELECT
+      `id`, `game_id`, Cast(`board_before_move` as char), `move_direction`,
+      `move_count`, `new_tile_value`, `new_tile_position`
+    FROM moves
+    WHERE game_id=? AND move_count>=?
+    ORDER BY id DESC
+    LIMIT ?
+  ) g
+  ORDER BY g.id
+EOT;
+$stmt = $mysqli->prepare($query);
+if (!$stmt)  {
+  echo "Prepare failed: (" . $mysqli->errno . ") " . $mysqli->error;
+}
 
 // Bind parameters
-$stmt->bind_param('ii', $game_id, $move_count);
+$stmt->bind_param('iii', $game_id, $move_count, $limit);
 
 // Execute statement
 $stmt->execute();

@@ -37,7 +37,7 @@ public:
 
 	static inline int sumTiles(Board b) { int score = 0; while (b) { score += (~1) & (1 << (b & TILE_MASK)); b >>= TILE_BITS; } return score; }
 
-	static inline int calculateScore(Board b) { int score = 0; while (b) { score += ((b & TILE_MASK) - 1) * ((~1) & (1 << (b & TILE_MASK))); b >>= TILE_BITS; } return score; }
+	static int calculateScore(Board b, int moveCount);
 
 	static inline int maxTile(Board b) { Tile m = 0; while (b) { Tile t = b & TILE_MASK; if (t > m) m = t; b >>= TILE_BITS; } return (int)((1 << m) & (~1)); }
 

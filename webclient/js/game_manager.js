@@ -30,7 +30,7 @@ GameManager.prototype.setup = function () {
   // Reload the game from a previous game if present
   if (this.moveFeed) {
     this.grid        = new Grid(4, m.board_before_move);
-    this.score       = this.calculateScore();
+    this.score       = this.calculateScore(m.move_count);
     this.over        = false;
     this.won         = this.hasWon();
     this.processMoveFeed();
@@ -254,14 +254,19 @@ GameManager.prototype.tileMatchesAvailable = function () {
 };
 
 // Calculate score from grid
-GameManager.prototype.calculateScore = function () {
+GameManager.prototype.calculateScore = function (moveCount) {
   var score = 0;
+  var tileSum = 0;
   this.grid.eachCell(function (x, y, tile) {
-    if (tile && tile > 0) {
+    if (tile && tile.value > 0) {
       score += tile.value * Math.round(Math.log(tile.value) / Math.LN2) - 1;
+      tileSum += tile.value;
     }
   });
-  return score;
+  // Subtract score lost from 4 tiles that were inserted.
+  // Assumes first two tiles were 2's.
+  var lossFrom4 = 2 * (tileSum - (2 * moveCount) - 4);
+  return score - lossFrom4;
 };
 
 // Determine whether a tile of value >= 2048 exists
