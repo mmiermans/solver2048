@@ -29,15 +29,17 @@ GameManager.prototype.setup = function () {
   xmlhttp = new XMLHttpRequest();
   xmlhttp.open("GET","movefeed.php",false);
   xmlhttp.send();
-  var moveFeed = JSON.parse(xmlhttp.responseText);
+  this.moveFeed = JSON.parse(xmlhttp.responseText);
+  this.moveFeedIndex = 0;
 
-  var m = moveFeed[0];
+  var m = this.moveFeed[0];
   // Reload the game from a previous game if present
-  if (moveFeed) {
+  if (this.moveFeed) {
     this.grid        = new Grid(4, m.board_before_move);
     this.score       = this.calculateScore();
     this.over        = false;
     this.won         = this.hasWon();
+    this.processMoveFeed();
   } else {
     this.grid        = new Grid(this.size);
     this.score       = 0;
@@ -51,6 +53,36 @@ GameManager.prototype.setup = function () {
   // Update the actuator
   this.actuate();
 };
+
+// Performs moves in the move feed
+GameManager.prototype.processMoveFeed = function () {
+    var that = this;
+
+    window.setInterval(function() {
+      that.popMoveFeed();
+    }, 10);
+
+}
+
+// Performs moves in the move feed
+GameManager.prototype.popMoveFeed = function () {
+  if (this.moveFeedIndex < this.moveFeed.length) {
+    var m = this.moveFeed[this.moveFeedIndex];
+
+    this.move(this.getDirection(m.move_direction));
+
+    var tile = new Tile(
+      { x: m.tile_position%this.size, y: Math.floor(m.tile_position/this.size) },
+      m.tile_value
+    );
+    this.grid.insertTile(tile);
+    
+    this.moveFeedIndex++;
+
+    this.actuate();
+  }
+};
+
 
 // Set up the initial tiles to start the game with
 GameManager.prototype.addStartTiles = function () {
@@ -173,14 +205,21 @@ GameManager.prototype.move = function (direction) {
   });
 
   if (moved) {
-    this.addRandomTile();
-
     if (!this.movesAvailable()) {
       this.over = true; // Game over!
     }
-
-    this.actuate();
   }
+};
+
+GameManager.prototype.getDirection = function (direction) {
+  var map = {
+    'up': 0,
+    'right': 1,
+    'down': 2,
+    'left': 3
+  };
+
+  return map[direction];
 };
 
 // Get the vector representing the chosen direction
