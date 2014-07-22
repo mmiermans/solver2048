@@ -25,7 +25,7 @@ if (isset($_GET["gameid"])) {
 }
 
 // Prepare statement
-$stmt = $mysqli->prepare("SELECT `id`, `game_id`, `board_before_move`, `move_direction`, `move_count`, `new_tile_value`, `new_tile_position` FROM moves WHERE game_id=(?) AND move_count>=(?)");
+$stmt = $mysqli->prepare("SELECT `id`, `game_id`, Cast(`board_before_move` as char), `move_direction`, `move_count`, `new_tile_value`, `new_tile_position` FROM moves WHERE game_id=(?) AND move_count>=(?)");
 
 // Bind parameters
 $stmt->bind_param('ii', $game_id, $move_count);
