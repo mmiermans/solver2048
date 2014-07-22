@@ -144,7 +144,6 @@ void MySqlConnector::flush() {
 
 void MySqlConnector::flushInsertMovesBuffer() {
 	if (movesBufferCount > 0) {
-		cout << movesBuffer.c_str();
 		if (mysql_query(con, movesBuffer.c_str())) {
 			throwMySqlException();
 		}

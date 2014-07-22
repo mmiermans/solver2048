@@ -26,7 +26,7 @@ GameManager.prototype.setup = function () {
   this.moveFeed = JSON.parse(xmlhttp.responseText);
   this.moveFeedIndex = 0;
 
-  var m = this.moveFeed[0];
+  var m = this.moveFeed[this.moveFeedIndex];
   // Reload the game from a previous game if present
   if (this.moveFeed) {
     this.grid        = new Grid(4, m.board_before_move);
@@ -54,8 +54,7 @@ GameManager.prototype.processMoveFeed = function () {
 
     window.setInterval(function() {
       that.popMoveFeed();
-    }, 10);
-
+    }, 50);
 }
 
 // Performs moves in the move feed
@@ -77,24 +76,6 @@ GameManager.prototype.popMoveFeed = function () {
   }
 };
 
-
-// Set up the initial tiles to start the game with
-GameManager.prototype.addStartTiles = function () {
-  for (var i = 0; i < this.startTiles; i++) {
-    this.addRandomTile();
-  }
-};
-
-// Adds a tile in a random position
-GameManager.prototype.addRandomTile = function () {
-  if (this.grid.cellsAvailable()) {
-    var value = Math.random() < 0.9 ? 2 : 4;
-    var tile = new Tile(this.grid.randomAvailableCell(), value);
-
-    this.grid.insertTile(tile);
-  }
-};
-
 // Sends the updated grid to the actuator
 GameManager.prototype.actuate = function () {
   this.actuator.actuate(this.grid, {
@@ -105,16 +86,6 @@ GameManager.prototype.actuate = function () {
     terminated: this.isGameTerminated()
   });
 
-};
-
-// Represent the current game as an object
-GameManager.prototype.serialize = function () {
-  return {
-    grid:        this.grid.serialize(),
-    score:       this.score,
-    over:        this.over,
-    won:         this.won,
-  };
 };
 
 // Save all tile positions and remove merger info
@@ -287,7 +258,7 @@ GameManager.prototype.calculateScore = function () {
   var score = 0;
   this.grid.eachCell(function (x, y, tile) {
     if (tile && tile > 0) {
-      score += tile.value * Math.Round(Math.log(tile.value) / Math.LN2) - 1;
+      score += tile.value * Math.round(Math.log(tile.value) / Math.LN2) - 1;
     }
   });
   return score;

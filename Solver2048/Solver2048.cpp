@@ -165,6 +165,7 @@ int main(int argc, char* argv[]) {
 		Board boardBefore = b;
 		moveCount++;
 		b = BoardLogic::performMove(b, bestMove);
+
 		// Insert new random tile.
 		int newTilePosition = 0;
 		Tile newTileValue = 0;
@@ -194,7 +195,7 @@ int main(int argc, char* argv[]) {
 			maxLookAhead = e.dfsLookAhead;
 		int cost = e.evaluateBoard(b);
 		currentTime = clock();
-		if (cost - lastCost > 1024 || hasValidMove == false || currentTime - lastPrintTime >= printStep) {
+		if (true || cost - lastCost > 1024 || hasValidMove == false || currentTime - lastPrintTime >= printStep) {
 			// Game statistics
 			cout << "Moves: " << moveCount << "\t";
 			cout << "Time: " << (currentTime - startTime) / CLOCKS_PER_SEC << "s\t";

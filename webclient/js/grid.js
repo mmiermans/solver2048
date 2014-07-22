@@ -48,6 +48,23 @@ Grid.prototype.fromInt64 = function (int64) {
   return cells;
 };
 
+Grid.prototype.toInt64 = function (base) {
+  var b = new BigNumber(0);
+  if (!base)
+    base = 16;
+
+  for (var y = this.size - 1; y >= 0; y--) {
+    for (var x = this.size - 1; x >= 0; x--) {
+      b = b.times(16);
+      var tile = this.cells[x][y];
+      if (tile && tile.value > 0)
+        b = b.plus(Math.round(Math.log(tile.value) / Math.LN2));
+    }
+  }
+
+  return b.toString(base);
+};
+
 Grid.prototype.fromState = function (state) {
   var cells = [];
 
