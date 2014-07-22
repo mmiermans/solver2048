@@ -8,7 +8,6 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
 
   this.inputManager.on("move", this.move.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
-  this.inputManager.on("keepPlaying", this.keepPlaying.bind(this));
 
   this.setup();
 }
@@ -20,35 +19,30 @@ GameManager.prototype.restart = function () {
   this.setup();
 };
 
-// Keep playing after winning (allows going over 2048)
-GameManager.prototype.keepPlaying = function () {
-  this.keepPlaying = true;
-  this.actuator.continueGame(); // Clear the game won/lost message
-};
-
 // Return true if the game is lost, or has won and the user hasn't kept playing
 GameManager.prototype.isGameTerminated = function () {
-  return this.over || (this.won && !this.keepPlaying);
+  return this.over;
 };
 
 // Set up the game
 GameManager.prototype.setup = function () {
-  var previousState = this.storageManager.getGameState();
+  xmlhttp = new XMLHttpRequest();
+  xmlhttp.open("GET","movefeed.php",false);
+  xmlhttp.send();
+  var moveFeed = JSON.parse(xmlhttp.responseText);
 
+  var m = moveFeed[0];
   // Reload the game from a previous game if present
-  if (previousState) {
-    this.grid        = new Grid(previousState.grid.size,
-                                previousState.grid.cells); // Reload grid
-    this.score       = previousState.score;
-    this.over        = previousState.over;
-    this.won         = previousState.won;
-    this.keepPlaying = previousState.keepPlaying;
+  if (moveFeed) {
+    this.grid        = new Grid(4, m.board_before_move);
+    this.score       = this.calculateScore();
+    this.over        = false;
+    this.won         = this.hasWon();
   } else {
     this.grid        = new Grid(this.size);
     this.score       = 0;
     this.over        = false;
     this.won         = false;
-    this.keepPlaying = false;
 
     // Add the initial tiles
     this.addStartTiles();
@@ -105,7 +99,6 @@ GameManager.prototype.serialize = function () {
     score:       this.score,
     over:        this.over,
     won:         this.won,
-    keepPlaying: this.keepPlaying
   };
 };
 
@@ -264,6 +257,27 @@ GameManager.prototype.tileMatchesAvailable = function () {
     }
   }
 
+  return false;
+};
+
+// Calculate score from grid
+GameManager.prototype.calculateScore = function () {
+  var score = 0;
+  this.grid.eachCell(function (x, y, tile) {
+    if (tile && tile > 0) {
+      score += tile.value * Math.Round(Math.log(tile.value) / Math.LN2) - 1;
+    }
+  });
+  return score;
+};
+
+// Determine whether a tile of value >= 2048 exists
+GameManager.prototype.hasWon = function () {
+  this.grid.eachCell(function (x, y, tile) {
+    if (tile && tile >= 2048) {
+      return true;
+    }
+  });
   return false;
 };
 

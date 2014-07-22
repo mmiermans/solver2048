@@ -1,6 +1,12 @@
 function Grid(size, previousState) {
   this.size = size;
-  this.cells = previousState ? this.fromState(previousState) : this.empty();
+  var newCells;
+  if (!previousState)
+    this.cells = this.empty();
+  else if (typeof previousState == 'string')
+    this.cells = this.fromInt64(previousState);
+  else
+    this.cells = this.fromState(previousState);
 }
 
 // Build a grid of the specified size
@@ -12,6 +18,30 @@ Grid.prototype.empty = function () {
 
     for (var y = 0; y < this.size; y++) {
       row.push(null);
+    }
+  }
+
+  return cells;
+};
+
+Grid.prototype.fromInt64 = function (int64) {
+  var cells = [];
+  var b = new BigNumber(int64);
+
+  for (var x = 0; x < this.size; x++) {
+    cells[x] = [];
+  }
+
+  for (var y = 0; y < this.size; y++) {
+    for (var x = 0; x < this.size; x++) {
+      var position = { x: x, y:y };
+
+      var value = b.mod(16).toNumber();
+      if (value > 0)
+        value = 1 << value;
+      b = b.dividedBy(16).floor();
+
+      cells[x].push(value > 0 ? new Tile(position, value) : null);
     }
   }
 
