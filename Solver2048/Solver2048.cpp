@@ -6,6 +6,7 @@
 #include <string>
 #include <time.h>
 #include <math.h>
+#include <assert.h>
 
 #include "mysqlconnector.h"
 
@@ -130,15 +131,15 @@ void precomputeMoves() {
 }
 
 int main(int argc, char* argv[]) {
-#ifdef ENABLE_MYSQL
-	MySqlConnector mySqlConnector;
-#endif
-
 	Engine e;
 
 	Board b = 0;
 	int moveCount = 0;
+
+#ifdef ENABLE_MYSQL
+	MySqlConnector mySqlConnector;
 	mySqlConnector.startGame(b, moveCount);
+#endif
 
 	// Set two random tiles if this is a new game.
 	if (b == 0) {
@@ -171,13 +172,15 @@ int main(int argc, char* argv[]) {
 		Tile newTileValue = 0;
 		e.getRandomTile(b, newTilePosition, newTileValue);
 		BoardLogic::setTile(b, newTilePosition, newTileValue);
+		assert(boardBefore != b);
 
 		// Gameover?
 		hasValidMove = (BoardLogic::getValidMoves(b) != (Move::MoveEnum)0);
 
 		int score = BoardLogic::calculateScore(b, moveCount);
-		int maxTile = BoardLogic::maxTile(b);
 
+#ifdef ENABLE_MYSQL
+		int maxTile = BoardLogic::maxTile(b);
 		// Add move to MySQL database
 		mySqlConnector.insertMove(
 				boardBefore,
@@ -188,6 +191,7 @@ int main(int argc, char* argv[]) {
 				score,
 				maxTile,
 				!hasValidMove);
+#endif
 
 #ifdef ENABLE_STDOUT
 		// Debug info
@@ -195,7 +199,7 @@ int main(int argc, char* argv[]) {
 			maxLookAhead = e.dfsLookAhead;
 		int cost = e.evaluateBoard(b);
 		currentTime = clock();
-		if (true || cost - lastCost > 1024 || hasValidMove == false || currentTime - lastPrintTime >= printStep) {
+		if (cost - lastCost > 1024 || hasValidMove == false || currentTime - lastPrintTime >= printStep) {
 			// Game statistics
 			cout << "Moves: " << moveCount << "\t";
 			cout << "Time: " << (currentTime - startTime) / CLOCKS_PER_SEC << "s\t";

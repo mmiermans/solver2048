@@ -5,7 +5,6 @@
  *      Author: mathijs
  */
 
-#define ENABLE_MYSQL
 #ifdef ENABLE_MYSQL
 
 #include <iostream>

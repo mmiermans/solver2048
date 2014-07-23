@@ -6,7 +6,6 @@
  */
 
 // if ENABLE_MYSQL is defined then the database will be updated.
-#define ENABLE_MYSQL
 #ifdef ENABLE_MYSQL
 
 #ifndef MYSQLCONNECTOR_H_
