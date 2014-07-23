@@ -42,9 +42,15 @@ The game engine can store its moves in a MySQL database such that the progress c
 1. Refresh your package index: `sudo apt-get update`
 2. Install LAMP: `sudo apt-get install lamp-server^`
 3. Test that your server works: [http://localhost](http://localhost)
-4. Import 
-4. Install MySQL C development libraries: `sudo apt-get install libmysqlclient-dev`
-5. Rebuild the game engine with MySQL output enabled: `make release ENABLE_SQL=1`
+4. Install phpMyAdmin (select **Apache2** during install): `sudo apt-get install phpmyadmin`
+5. Configure the database
+  1. Go to [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
+  2. Create the database by importing `solver2048/sql/solver2048_v1.x.sql`
+  3. Create a user (e.g. `solver2048_user`) with select, insert and update privaleges to this database
+5. Install the MySQL C development libraries: `sudo apt-get install libmysqlclient-dev`
+6. Build engine with MySQL output enabled (substitute username and password, optionally specify `release` target, optionally add `-DMYSQL_HOSTNAME="foo"`, `-MYSQL_DATABASE="bar"`, `-MYSQL_PORT=123`):
+
+```make ENABLE_SQL=1 DEFS='-DMYSQL_USERNAME="solver2048_user" -DMYSQL_PASSWORD="abc123"'```
 
 
 
