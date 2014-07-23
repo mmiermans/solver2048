@@ -57,7 +57,7 @@ Setup the server with the following steps:
   2. Create symlink: `sudo ln -s ~/solver2048/webclient/public /var/www/html`
   3. Test this by visiting [http://localhost](http://localhost), where you should see an empty 2048 board
 7. Install the MySQL C development libraries: `sudo apt-get install libmysqlclient-dev`
-8. Build the game engine using the command listen below, with the following adjustments:
+8. Build the game engine using the make command listed below, with the following adjustments:
   1. Substitute username and password
   2. Optionally specify the `release` target for better performance
   3. If necessary add `-DMYSQL_HOSTNAME="foo"`, `-DMYSQL_DATABASE="bar"` and/or `-DMYSQL_PORT=123` to `DEFS`
