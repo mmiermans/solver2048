@@ -14,6 +14,26 @@
 
 #include "mysqlconnector.h"
 
+#ifndef MYSQL_HOSTNAME
+#define MYSQL_HOSTNAME "localhost"
+#endif
+
+#ifndef MYSQL_PORT
+#define MYSQL_PORT 0
+#endif
+
+#ifndef MYSQL_DATABASE
+#define MYSQL_DATABASE "solver2048"
+#endif
+
+#ifndef MYSQL_USERNAME
+#define MYSQL_USERNAME "solver2048_user"
+#endif
+
+#ifndef MYSQL_PASSWORD
+#define MYSQL_PASSWORD "abc123"
+#endif
+
 using namespace std;
 
 MySqlConnector::MySqlConnector() {
@@ -29,11 +49,11 @@ MySqlConnector::MySqlConnector() {
 	// Connect to database
 	MYSQL* ret = mysql_real_connect(
 			con,                 // MYSQL structure
-			"localhost",         // host
-			"solver2048_admin",  // username
-			"S2mfvqNYp77jbN9J",  // password
-			"solver2048",        // database
-			0,                   // port
+			MYSQL_HOSTNAME,      // host
+			MYSQL_USERNAME,      // username
+			MYSQL_PASSWORD,      // password
+			MYSQL_DATABASE,      // database
+			MYSQL_PORT,          // port
 			NULL,                // unix_socket
 			0);                  // client_flag
 

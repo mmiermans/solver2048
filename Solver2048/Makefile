@@ -2,8 +2,9 @@ SHELL = /bin/sh
 CC    = g++
 
 MYSQLFLAGS   = -I/usr/include/mysql -DBIG_JOINS=1 -fno-strict-aliasing -DNDEBUG -L/usr/lib/x86_64-linux-gnu -lmysqlclient -lpthread -lz -lm -ldl
+DEFS         =
 CFLAGS       = -Wall -march=native
-FLAGS        = -msse -msse2 -msse3 -msse4 -std=c++11 $(CFLAGS)
+FLAGS        = -msse -msse2 -msse3 -msse4 -std=c++11 $(CFLAGS) $(DEFS)
 DEBUGFLAGS   = -O0 -g -D _DEBUG
 RELEASEFLAGS = -O3
 ENABLE_MYSQL = 0
