@@ -5,11 +5,11 @@ solver2048
 
 TL;DR: `git clone https://github.com/mmiermans/solver2048.git && cd solver2048/Solver2048 && make`
 
-Perhaps that was a little too quick, so more detailed instructions follow. The game engine can be built on a 64-bit version of Windows or Linux.
+Perhaps that was a little quick, so more detailed instructions follow. The game engine can be built on a 64-bit version of Windows or Linux.
 
 ### Windows (64-bit)
 
-Open the `.sln` solution file. Build in release mode to get the best performance.
+Open the `.sln` solution file with Visual Studio. Build in release mode to get the best performance. I have only tested it with VS2014, so modifications might be necessary if you would like to use an earlier version.
 
 ### Linux (64-bit)
 
