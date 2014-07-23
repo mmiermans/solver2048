@@ -5,7 +5,7 @@ solver2048
 
 TL;DR: `git clone https://github.com/mmiermans/solver2048.git && cd solver2048/Solver2048 && make`
 
-Perhaps that was a little quick, so more detailed instructions follow. The game engine can be built on a 64-bit version of Windows or Linux.
+More detailed instructions follow for building the game engine on a 64-bit version of Windows or Linux (32-bit systems are not supported).
 
 ### Windows (64-bit)
 
