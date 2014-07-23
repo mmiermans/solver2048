@@ -5,7 +5,7 @@ solver2048
 
 TL;DR: `git clone https://github.com/mmiermans/solver2048.git && cd solver2048/Solver2048 && make && ./Solver2048`
 
-More detailed instructions follow for building the engine on Windows or Linux. A 64-bit system is required.
+That was the short version! What follows are more detailed instructions for building the engine on Windows or Linux. A 64-bit system is required in both cases. The Linux instructions are targeted towards Ubuntu -- because that's what I use -- so subtitute apt-get with your favorite package manager if you use something else.
 
 ### Windows 64-bit
 
@@ -37,7 +37,9 @@ If your preference is to use Eclipse, then open Eclipse and import the project f
 
 ## Live web stream
 
-The game engine can store its moves in a MySQL database such that the progress can be streamed over the internet. Setup the server with these steps:
+The game engine supports writing its moves in a MySQL database such that the progress can be streamed over the internet.
+
+Setup the server with the following steps:
 
 1. Refresh your package index: `sudo apt-get update`
 2. Install LAMP: `sudo apt-get install lamp-server^`
@@ -45,17 +47,19 @@ The game engine can store its moves in a MySQL database such that the progress c
 4. Install phpMyAdmin (select **Apache2** during install): `sudo apt-get install phpmyadmin`
 5. Configure the database
   1. Go to [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
-  2. Create the database by importing `solver2048/sql/solver2048_v1.x.sql`
-  3. Create a user (e.g. `solver2048_user`) with select, insert and update privaleges to this database
-6. Set the database login info in `solver2048/webclient/resources/config.php`
+  2. Import the database: `solver2048/sql/solver2048_v1.x.sql`
+  3. Create a user (e.g. `solver2048_user`) with select, insert and update privaleges to the database `solver2048`
+6. Adjust the database login info in `solver2048/webclient/resources/config.php`
 7. Bring the webclient online:
-  1. Remove the example html directory: `sudo rm -r /var/www/html
+  1. Remove the example html directory: `sudo rm -r /var/www/html`
   2. Create symlink: `sudo ln -s ~/solver2048/webclient/public /var/www/html`
   3. Test this by visiting [http://localhost](http://localhost), where you should see an empty 2048 board
 7. Install the MySQL C development libraries: `sudo apt-get install libmysqlclient-dev`
 8. Build engine with MySQL output enabled (substitute username and password, optionally specify `release` target, optionally add `-DMYSQL_HOSTNAME="foo"`, `-MYSQL_DATABASE="bar"`, `-MYSQL_PORT=123`):
 
-```make ENABLE_SQL=1 DEFS='-DMYSQL_USERNAME="solver2048_user" -DMYSQL_PASSWORD="abc123"'```
+```
+make ENABLE_SQL=1 DEFS='-DMYSQL_USERNAME="solver2048_user" -DMYSQL_PASSWORD="abc123"'
+```
 
 
 
