@@ -49,15 +49,21 @@ Setup the server with the following steps:
   1. Go to [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
   2. Import the database: `solver2048/sql/solver2048_v1.x.sql`
   3. Create a user (e.g. `solver2048_user`) with select, insert and update privaleges to the database `solver2048`
-6. Adjust the database login info in `solver2048/webclient/resources/config.php`
+6. Adjust the database login info for PHP:
+  1. `cd solver2048/webclient/resources/ && cp config-sample.php config.php`
+  2. Enter correct login data in `config.php`
 7. Bring the webclient online:
   1. Remove the example html directory: `sudo rm -r /var/www/html`
   2. Create symlink: `sudo ln -s ~/solver2048/webclient/public /var/www/html`
   3. Test this by visiting [http://localhost](http://localhost), where you should see an empty 2048 board
 7. Install the MySQL C development libraries: `sudo apt-get install libmysqlclient-dev`
-8. Build engine with MySQL output enabled (substitute username and password, optionally specify `release` target, optionally add `-DMYSQL_HOSTNAME="foo"`, `-MYSQL_DATABASE="bar"`, `-MYSQL_PORT=123`):
+8. Build the game engine using the command listen below, with the following adjustments:
+  1. Substitute username and password
+  2. Optionally specify the `release` target for better performance
+  3. If necessary add `-DMYSQL_HOSTNAME="foo"`, `-MYSQL_DATABASE="bar"` and/or `-MYSQL_PORT=123`
 
 ```
+cd ~/solver2048/Solver2048
 make ENABLE_SQL=1 DEFS='-DMYSQL_USERNAME="solver2048_user" -DMYSQL_PASSWORD="abc123"'
 ```
 
