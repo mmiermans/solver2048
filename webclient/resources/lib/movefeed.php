@@ -1,6 +1,11 @@
 <?php
 
-$mysqli = new mysqli('localhost','solver2048_admin','S2mfvqNYp77jbN9J','solver2048');
+$mysqli = new mysqli(
+  $config["db"]["host"],
+  $config["db"]["username"],
+  $config["db"]["password"],
+  $config["db"]["dbname"]);
+
 if ($mysqli->connect_errno) {
   echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
 }
@@ -73,5 +78,3 @@ while ($stmt->fetch()) {
 $stmt->close();
 
 echo json_encode($data);
-
-?>

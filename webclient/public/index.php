@@ -87,7 +87,7 @@
   <script src="js/application.js"></script>
   
   <script>
-    window.bootMoveFeed = <?php include 'movefeed.php';?>;
+    window.bootMoveFeed = <?php include 'bootmovefeed.php'; ?>;
   </script>
 </body>
 </html>
