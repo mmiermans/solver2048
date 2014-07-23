@@ -60,7 +60,7 @@ Setup the server with the following steps:
 8. Build the game engine using the command listen below, with the following adjustments:
   1. Substitute username and password
   2. Optionally specify the `release` target for better performance
-  3. If necessary add `-DMYSQL_HOSTNAME="foo"`, `-MYSQL_DATABASE="bar"` and/or `-MYSQL_PORT=123`
+  3. If necessary add `-DMYSQL_HOSTNAME="foo"`, `-DMYSQL_DATABASE="bar"` and/or `-DMYSQL_PORT=123` to `DEFS`
 
 ```
 cd ~/solver2048/Solver2048
