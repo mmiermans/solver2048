@@ -3,35 +3,22 @@ solver2048
 
 ## Building the game engine
 
-Solver2048 is an application written in C++ that computes the best moves in the game 2048. Both Windows and Linux are supported, but a 64-bit version is required in either case. The result will be something like this:
+TL;DR:
 
 ```
-Moves: 40	Time: 0s  Score: 380
-LookAhead: 3	AvgMoves/s: 40.8155	Moves/s: 40.8155	kNodes/s: 2424
-#############################
-#      #      #      #      #
-#   64 #   16 #    4 #      #
-#      #      #      #      #
-#############################
-#      #      #      #      #
-#    2 #      #    2 #      #
-#      #      #      #      #
-#############################
-#      #      #      #      #
-#    4 #    4 #      #      #
-#      #      #      #      #
-#############################
-#      #      #      #      #
-#    2 #      #      #      #
-#      #      #      #      #
-########## 0x0001002201010246
+git clone https://github.com/mmiermans/solver2048.git \
+&& cd solver2048/Solver2048 \
+&& make \
+&& ./Solver2048
 ```
 
-### Windows
+The game engine is written in C++ and requires a 64-bit version of Windows or Linux.
+
+### Windows x86-64
 
 Open the `.sln` solution file. Build in release mode to get the best performance.
 
-### Linux
+### Linux x86-64
 
 Clone the project:
 
