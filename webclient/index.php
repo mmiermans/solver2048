@@ -85,5 +85,9 @@
   <script src="js/tile.js"></script>
   <script src="js/game_manager.js"></script>
   <script src="js/application.js"></script>
+  
+  <script>
+    window.bootMoveFeed = <?php include 'movefeed.php';?>;
+  </script>
 </body>
 </html>

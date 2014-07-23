@@ -1,9 +1,17 @@
-function GameManager(size, Actuator) {
+function GameManager(size, Actuator, bootFeed) {
   this.size           = size; // Size of the grid
   this.actuator       = new Actuator;
 
   this.startTiles     = 2;
 
+  this.requestPeriod  = 5000;
+
+  this.movePeriod = 100;
+
+  this.moveFeed = [];
+  if (bootFeed instanceof Array)
+    this.moveFeed = this.moveFeed.concat(bootFeed);
+  
   this.setup();
 }
 
@@ -20,60 +28,86 @@ GameManager.prototype.isGameTerminated = function () {
 
 // Set up the game
 GameManager.prototype.setup = function () {
-  xmlhttp = new XMLHttpRequest();
-  xmlhttp.open("GET","movefeed.php",false);
-  xmlhttp.send();
-  this.moveFeed = JSON.parse(xmlhttp.responseText);
-  this.moveFeedIndex = 0;
-
-  var m = this.moveFeed[this.moveFeedIndex];
-  // Reload the game from a previous game if present
-  if (this.moveFeed) {
-    this.grid        = new Grid(4, m.board_before_move);
-    this.score       = this.calculateScore(m.move_count);
-    this.over        = false;
-    this.won         = this.hasWon();
-    this.processMoveFeed();
-  } else {
-    this.grid        = new Grid(this.size);
-    this.score       = 0;
-    this.over        = false;
-    this.won         = false;
-
-    // Add the initial tiles
-    this.addStartTiles();
-  }
+  this.processMoveFeed();
 
   // Update the actuator
   this.actuate();
 };
 
-// Performs moves in the move feed
-GameManager.prototype.processMoveFeed = function () {
-    var that = this;
-
-    window.setInterval(function() {
-      that.popMoveFeed();
-    }, 50);
+// Initialize grid to first move in feed
+GameManager.prototype.initGrid = function (m) {
+  this.grid        = new Grid(this.size, m.board_before_move);
+  this.score       = this.calculateScore(m.move_count);
+  this.over        = false;
+  this.won         = this.hasWon();
 }
 
-// Performs moves in the move feed
-GameManager.prototype.popMoveFeed = function () {
-  if (this.moveFeedIndex < this.moveFeed.length) {
-    var m = this.moveFeed[this.moveFeedIndex];
+// Perform AJAX request to receive moves
+GameManager.prototype.requestMoves = function () {
+  var that = this;
+  
+  var moveCount = this.moveFeed.length > 0 ?
+    this.moveFeed[this.moveFeed.length-1].move_count + 1 : 0;
+  var url = "getmovefeed.php?" + encodeQueryData({
+    gameid: this.gameId,
+    movecount: moveCount
+  });
 
-    this.move(this.getDirection(m.move_direction));
+  xmlhttp = new XMLHttpRequest();
+  xmlhttp.onreadystatechange = function() {
+    if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+      var newMoves = JSON.parse(xmlhttp.responseText);
 
-    var tile = new Tile(
-      { x: m.tile_position%this.size, y: Math.floor(m.tile_position/this.size) },
-      m.tile_value
-    );
-    this.grid.insertTile(tile);
-    
-    this.moveFeedIndex++;
+      if (newMoves instanceof Array)
+        that.moveFeed = that.moveFeed.concat(newMoves);
+      else
+        throw "AJAX response is not an array.";
+    }
+  };
 
-    this.actuate();
+  xmlhttp.open("GET", url, true);
+  xmlhttp.send();
+
+}
+
+// Performs moves in the move feed and request more moves when necessary
+GameManager.prototype.processMoveFeed = function () {
+  var that = this;
+
+  if (this.moveFeed.length > 0)
+    this.executeMoveFromFeed();
+  
+  if (this.moveFeed.length * this.movePeriod < this.requestPeriod) {
+    this.requestMoves();
   }
+
+  window.setTimeout(function() {
+    that.processMoveFeed();
+  }, this.movePeriod);
+}
+
+// Performs the first move in the move feed
+GameManager.prototype.executeMoveFromFeed = function () {
+  var m = this.moveFeed.shift();
+  
+  this.gameId = m.game_id;
+  
+  if (this.moveCount + 1 != m.move_count) {
+    this.initGrid(m);
+  }
+  this.moveCount = m.move_count;
+
+  this.move(this.getDirection(m.move_direction));
+
+  var tile = new Tile(
+    { x: m.tile_position%this.size, y: Math.floor(m.tile_position/this.size) },
+    m.tile_value
+  );
+  this.grid.insertTile(tile);
+  
+  this.moveFeedIndex++;
+
+  this.actuate();
 };
 
 // Sends the updated grid to the actuator
