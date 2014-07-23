@@ -3,14 +3,7 @@ solver2048
 
 ## Building the game engine
 
-TL;DR:
-
-```
-git clone https://github.com/mmiermans/solver2048.git \
-&& cd solver2048/Solver2048 \
-&& make \
-&& ./Solver2048
-```
+TL;DR: `git clone https://github.com/mmiermans/solver2048.git && cd solver2048/Solver2048 && make`
 
 The game engine is written in C++ and requires a 64-bit version of Windows or Linux.
 
