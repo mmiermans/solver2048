@@ -9,7 +9,7 @@ That was the short version! What follows are more detailed instructions for buil
 
 ### Windows 64-bit
 
-Open the `.sln` solution file with Visual Studio. Build in release mode to get the best performance. I have only tested it with VS2014, so modifications might be necessary if you would like to use an earlier version.
+Open the `.sln` solution file with Visual Studio. Build in release mode to get the best performance. I have only tested it with VS2013 and modifications might be necessary if you use an earlier version.
 
 ### Linux 64-bit
 
@@ -42,8 +42,8 @@ The game engine supports writing its moves in a MySQL database such that the pro
 Setup the server with the following steps:
 
 1. Refresh your package index: `sudo apt-get update`
-2. Install LAMP: `sudo apt-get install lamp-server^`
-3. Test that your server works: [http://localhost](http://localhost)
+2. Install LAMP server: `sudo apt-get install lamp-server^`
+  1. Test that your server works: [http://localhost](http://localhost)
 4. Install phpMyAdmin (select **Apache2** during install): `sudo apt-get install phpmyadmin`
 5. Configure the database
   1. Go to [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
