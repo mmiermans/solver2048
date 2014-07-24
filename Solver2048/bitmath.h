@@ -14,7 +14,7 @@ public:
 	static inline void sanityCheck() {
 		// Little-endian check
 		int num = 1;
-		assert(*(char *) &num == 1);
+		if (*(char *) &num != 1) assert(false);
 
 		// 64-bit check
 		uint64_t i = 1;

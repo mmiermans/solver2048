@@ -15,8 +15,11 @@
 #include "mysqlconnector.h"
 #include "convert.h"
 
+#define _STRINGIFY(s) #s
+#define STRINGIFY(s) _STRINGIFY(s)
+
 #ifndef MYSQL_HOSTNAME
-#define MYSQL_HOSTNAME "localhost"
+#define MYSQL_HOSTNAME localhost
 #endif
 
 #ifndef MYSQL_PORT
@@ -24,11 +27,11 @@
 #endif
 
 #ifndef MYSQL_DATABASE
-#define MYSQL_DATABASE "solver2048"
+#define MYSQL_DATABASE solver2048
 #endif
 
 #ifndef MYSQL_USERNAME
-#define MYSQL_USERNAME "solver2048_user"
+#define MYSQL_USERNAME solver2048_user
 #endif
 
 #ifndef MYSQL_PASSWORD
@@ -48,14 +51,15 @@ MySqlConnector::MySqlConnector() {
 	}
 
 	// Connect to database
-	MYSQL* ret = mysql_real_connect(con,                      // MYSQL structure
-			MYSQL_HOSTNAME,            // host
-			MYSQL_USERNAME,            // username
-			MYSQL_PASSWORD,            // password
-			MYSQL_DATABASE,            // database
-			MYSQL_PORT,                // port
-			NULL,                      // unix_socket
-			CLIENT_MULTI_STATEMENTS);  // client_flag
+	MYSQL* ret = mysql_real_connect(
+			con,                        // MYSQL structure
+			STRINGIFY(MYSQL_HOSTNAME),  // host
+			STRINGIFY(MYSQL_USERNAME),  // username
+			STRINGIFY(MYSQL_PASSWORD),  // password
+			STRINGIFY(MYSQL_DATABASE),  // database
+			MYSQL_PORT,                 // port
+			NULL,                       // unix_socket
+			CLIENT_MULTI_STATEMENTS);   // client_flag
 
 	if (ret == NULL) {
 		throwMySqlException();
