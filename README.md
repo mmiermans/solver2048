@@ -65,7 +65,7 @@ Setup the server with the following steps:
 
 ```
 cd ~/solver2048/Solver2048
-make ENABLE_SQL=1 DEFS='-DMYSQL_USERNAME="solver2048_user" -DMYSQL_PASSWORD="abc123"'
+make ENABLE_MYSQL=1 DEFS='-DMYSQL_USERNAME="solver2048_user" -DMYSQL_PASSWORD="abc123"'
 ```
 
 
