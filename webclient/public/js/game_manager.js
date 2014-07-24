@@ -5,12 +5,13 @@ function GameManager(size, Actuator, bootFeed) {
   this.startTiles     = 2;
 
   this.requestPeriod  = 5000;
+  this.isRequestInProgress = false;
+  this.lastRequestTime = 0;
 
   this.movePeriod = 100;
 
   this.moveFeed = [];
-  if (bootFeed instanceof Array)
-    this.moveFeed = this.moveFeed.concat(bootFeed);
+  this.concatMoves(bootFeed);
   
   this.setup();
 }
@@ -42,32 +43,45 @@ GameManager.prototype.initGrid = function (m) {
   this.won         = this.hasWon();
 }
 
+// Add moves to feed
+GameManager.prototype.concatMoves = function (moves) {
+  if (moves instanceof Array) {
+    this.moveFeed = this.moveFeed.concat(moves);
+    if (moves.length > 0)
+      this.moveFeedEnd = moves[moves.length-1].move_count + 1;
+  } else {
+    throw "Expecting moves to be an array";
+  }
+}
+
 // Perform AJAX request to receive moves
 GameManager.prototype.requestMoves = function () {
   var that = this;
   
-  var moveCount = this.moveFeed.length > 0 ?
-    this.moveFeed[this.moveFeed.length-1].move_count + 1 : 0;
+  // Don't handle two requests at the same time.
+  if (this.isRequestInProgress || Date.now() - this.lastRequestTime < this.requestPeriod)
+    return;
+  
   var url = "getmovefeed.php?" + encodeQueryData({
     gameid: this.gameId,
-    movecount: moveCount
+    movecount: this.moveFeedEnd
   });
 
   xmlhttp = new XMLHttpRequest();
+  // Completion callback
   xmlhttp.onreadystatechange = function() {
     if (xmlhttp.readyState==4 && xmlhttp.status==200) {
       var newMoves = JSON.parse(xmlhttp.responseText);
-
-      if (newMoves instanceof Array)
-        that.moveFeed = that.moveFeed.concat(newMoves);
-      else
-        throw "AJAX response is not an array.";
+      that.concatMoves(newMoves);
+      that.isRequestInProgress = false;
     }
+    // TODO: handle other cases besides 4/200.
   };
 
   xmlhttp.open("GET", url, true);
   xmlhttp.send();
-
+  this.isRequestInProgress = true;
+  this.lastRequestTime = Date.now();
 }
 
 // Performs moves in the move feed and request more moves when necessary
@@ -83,7 +97,7 @@ GameManager.prototype.processMoveFeed = function () {
 
   window.setTimeout(function() {
     that.processMoveFeed();
-  }, this.movePeriod);
+  }, that.movePeriod);
 }
 
 // Performs the first move in the move feed
