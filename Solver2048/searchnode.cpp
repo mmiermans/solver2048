@@ -3,6 +3,7 @@
 #include <string.h>
 
 SearchNode::SearchNode() {
+	emptyTileCount = 0;
 }
 
 void SearchNode::generateChildren(Board b) {

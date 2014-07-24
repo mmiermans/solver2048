@@ -1,4 +1,5 @@
 <?php
 require_once(realpath(dirname(__FILE__) . "/../resources/config.php"));
 
+$limit = 50;
 include 'movefeed.php';

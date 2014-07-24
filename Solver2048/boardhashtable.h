@@ -8,7 +8,7 @@
 class BoardHashTable
 {
 public:
-	const int size = 16760761;
+	static const int size = 16760761;
 	const float nullValue = FLT_MAX;
 
 	BoardHashTable() { table = new float[size]; clear(); }

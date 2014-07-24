@@ -17,6 +17,11 @@ Engine::Engine()
 	: scoreMap(1<<20)
 #endif
 {
+	hashHits = 0;
+	hashMisses = 0;
+	nodeCounter = 0;
+	cpuTime = 0;
+
 	fastRng = new fastrand;
 	BitMath::initRng(fastRng);
 

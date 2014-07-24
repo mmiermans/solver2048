@@ -11,7 +11,7 @@ if ($mysqli->connect_errno) {
 }
 
 if (!isset($limit)) {
-  $limit = 10;
+  $limit = 1000;
 }
 
 if (!isset($move_count)) {

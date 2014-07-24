@@ -50,16 +50,16 @@ public:
 	uint32_t evaluateBoard(Board b);
 
 	// Debug stats
-	int hashHits = 0;
-	int hashMisses = 0;
-	uint64_t nodeCounter = 0;
-	clock_t cpuTime = 0;
+	int hashHits;
+	int hashMisses;
+	uint64_t nodeCounter;
+	clock_t cpuTime;
 	int moveCounter[4];
 
 	int dfsLookAhead;
 
 private:
-	std::map<Board, std::vector<Board>> reverseHashTable;
+	std::map< Board, std::vector<Board> > reverseHashTable;
 
 	fastrand* fastRng;
 	SearchNode* nodes;

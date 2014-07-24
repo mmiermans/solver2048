@@ -90,9 +90,6 @@ void playSimpleStrategy() {
 
 		delete sn;
 	}
-
-	getchar();
-
 }
 
 void printChildBoards(SearchNode& sn) {
@@ -127,10 +124,11 @@ void precomputeMoves() {
 			if (i % 16 == 15)
 				cout << " \\\\" << endl;
 	}
-	getchar();
 }
 
 int main(int argc, char* argv[]) {
+	BitMath::sanityCheck();
+
 	Engine e;
 
 	Board b = 0;
@@ -226,8 +224,6 @@ int main(int argc, char* argv[]) {
 	}
 
 	cout << "GAME OVER.";
-
-	getchar();
 
 	return 0;
 }

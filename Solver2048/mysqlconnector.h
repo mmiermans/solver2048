@@ -48,17 +48,17 @@ private:
 	int gameId;
 	int moveCount;
 
-	std::string movesBuffer;
-	int movesBufferCount;
-	clock_t movesBufferFlushTime;
-	const int movesBufferCountTrigger = 512;
-	const clock_t movesBufferTimeTrigger = 4;
+	std::string queryBuffer;
+	int queryBufferCount;
+	clock_t queryBufferFlushTime;
+	static const int queryBufferCountTrigger = 512;
+	static const clock_t queryBufferTimeTrigger = 4;
 
-	void updateGame(int score, int maxTile, bool hasEnded, Board board);
+	const std::string getUpdateGameQuery(int score, int maxTile, bool hasEnded, Board board);
 
 	std::string getSqlMoveEnum(Move::MoveEnum move);
 
-	void flushInsertMovesBuffer();
+	void flushQueryBuffer();
 
 	void throwMySqlException();
 };
