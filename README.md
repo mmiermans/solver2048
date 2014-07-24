@@ -47,11 +47,12 @@ Setup the server with the following steps:
 4. Install phpMyAdmin (select **Apache2** during install): `sudo apt-get install phpmyadmin`
 5. Configure the database
   1. Go to [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
-  2. Import the database: `solver2048/sql/solver2048_v1.x.sql`
+  2. Import `solver2048/sql/solver2048_v1.x.sql`
   3. Create a user (e.g. `solver2048_user`) with select, insert and update privaleges to the database `solver2048`
 6. Adjust the database login info for PHP:
-  1. `cd solver2048/webclient/resources/ && cp config-sample.php config.php`
-  2. Enter correct login data in `config.php`
+  1. `cd ~/solver2048/webclient/resources`
+  2. Create a config file: `cp config-sample.php config.php`
+  3. Edit `config.php` to match the login data for your database
 7. Bring the webclient online:
   1. Remove the example html directory: `sudo rm -r /var/www/html`
   2. Create symlink: `sudo ln -s ~/solver2048/webclient/public /var/www/html`
