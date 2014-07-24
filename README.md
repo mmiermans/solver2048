@@ -5,11 +5,11 @@ solver2048
 
 TL;DR: `git clone https://github.com/mmiermans/solver2048.git && cd solver2048/Solver2048 && make && ./Solver2048`
 
-More detailed instructions follow for building the engine on Windows or Linux. A 64-bit system is required.
+That was the short version! What follows are more detailed instructions for building the engine on Windows or Linux. A 64-bit system is required in both cases. The Linux instructions are targeted towards Ubuntu -- because that's what I use -- so subtitute apt-get with your favorite package manager if you use something else.
 
 ### Windows 64-bit
 
-Open the `.sln` solution file with Visual Studio. Build in release mode to get the best performance. I have only tested it with VS2014, so modifications might be necessary if you would like to use an earlier version.
+Open the `.sln` solution file with Visual Studio. Build in release mode to get the best performance. I have only tested it with VS2013 and modifications might be necessary if you use an earlier version.
 
 ### Linux 64-bit
 
@@ -35,22 +35,38 @@ If your preference is to use Eclipse, then open Eclipse and import the project f
 
 <img src="https://raw.githubusercontent.com/mmiermans/solver2048/master/doc/eclipse_build_configurations_dialog.png" alt="Eclipse Build configuration" width="400px"/>
 
-## Running it as a server
+## Live web stream
 
-The game engine can store its moves in a MySQL database such that the progress can be monitored on the web. Setup the server with these steps:
+The game engine supports writing its moves in a MySQL database such that the progress can be streamed over the internet.
+
+Setup the server with the following steps:
 
 1. Refresh your package index: `sudo apt-get update`
-2. Install LAMP: `sudo apt-get install lamp-server^`
-3. Test that your server works: [http://localhost](http://localhost)
+2. Install LAMP server: `sudo apt-get install lamp-server^`
+  1. Test that your server works: [http://localhost](http://localhost)
 4. Install phpMyAdmin (select **Apache2** during install): `sudo apt-get install phpmyadmin`
 5. Configure the database
   1. Go to [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
-  2. Create the database by importing `solver2048/sql/solver2048_v1.x.sql`
-  3. Create a user (e.g. `solver2048_user`) with select, insert and update privaleges to this database
-5. Install the MySQL C development libraries: `sudo apt-get install libmysqlclient-dev`
-6. Build engine with MySQL output enabled (substitute username and password, optionally specify `release` target, optionally add `-DMYSQL_HOSTNAME="foo"`, `-MYSQL_DATABASE="bar"`, `-MYSQL_PORT=123`):
+  2. Import `solver2048/sql/solver2048_v1.x.sql`
+  3. Create a user (e.g. `solver2048_user`) with select, insert and update privaleges to the database `solver2048`
+6. Adjust the database login info for PHP:
+  1. `cd ~/solver2048/webclient/resources`
+  2. Create a config file: `cp config-sample.php config.php`
+  3. Edit `config.php` to match the login data for your database
+7. Bring the webclient online:
+  1. Remove the example html directory: `sudo rm -r /var/www/html`
+  2. Create symlink: `sudo ln -s ~/solver2048/webclient/public /var/www/html`
+  3. Test this by visiting [http://localhost](http://localhost), where you should see an empty 2048 board
+7. Install the MySQL C development libraries: `sudo apt-get install libmysqlclient-dev`
+8. Build the game engine using the make command listed below, with the following adjustments:
+  1. Substitute username and password
+  2. Optionally specify the `release` target for better performance
+  3. If necessary add `-DMYSQL_HOSTNAME="foo"`, `-DMYSQL_DATABASE="bar"` and/or `-DMYSQL_PORT=123` to `DEFS`
 
-```make ENABLE_SQL=1 DEFS='-DMYSQL_USERNAME="solver2048_user" -DMYSQL_PASSWORD="abc123"'```
+```
+cd ~/solver2048/Solver2048
+make ENABLE_MYSQL=1 DEFS='-DMYSQL_USERNAME="solver2048_user" -DMYSQL_PASSWORD="abc123"'
+```
 
 
 
