@@ -33,7 +33,7 @@ if (!isset($game_id)) {
 $query = <<<EOT
   SELECT
     `id`, `game_id`, Cast(`board_before_move` as char), `move_direction`,
-    `move_count`, `new_tile_value`, `new_tile_position`
+    `move_count`, `new_tile_value`, `new_tile_position`, `time`
   FROM moves
   WHERE game_id=? AND move_count>=?
   ORDER BY id ASC
@@ -58,7 +58,8 @@ $stmt->bind_result(
   $col_move_direction,
   $col_move_count,
   $col_new_tile_value,
-  $col_new_tile_position);
+  $col_new_tile_position,
+  $col_time);
 
 // Fetch values
 $data = array();

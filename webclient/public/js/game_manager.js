@@ -6,9 +6,14 @@ function GameManager(size, Actuator, bootFeed) {
 
   this.requestPeriod  = 5000;
   this.isRequestInProgress = false;
-  this.lastRequestTime = 0;
+  this.lastRequestTime = Date.now();
+  
+  this.roundTrip = 1000;
 
   this.movePeriod = 100;
+  this.movePeriodDelta = 0;
+  this.movePeriodTarget = 100;
+  this.feedTarget = 6 * this.requestPeriod;
 
   this.moveFeed = [];
   this.concatMoves(bootFeed);
@@ -72,32 +77,63 @@ GameManager.prototype.requestMoves = function () {
   xmlhttp.onreadystatechange = function() {
     if (xmlhttp.readyState==4 && xmlhttp.status==200) {
       var newMoves = JSON.parse(xmlhttp.responseText);
-      that.concatMoves(newMoves);
+      var curTime = Date.now();
       that.isRequestInProgress = false;
+      
+      // Estimate roundtrip
+      that.roundTrip = curTime - that.requestTime;
+      
+      // Estimate milliseconds/move
+      var requestDelta = curTime - that.lastRequestTime;
+      var newEstimate = Math.min(5000, requestDelta / (newMoves.length + 0.5));
+      var avgPeriod = (newEstimate + that.movePeriod) / 2;
+      var feedError = ((that.moveFeed.length + 0.5) * avgPeriod) / that.feedTarget;
+      that.movePeriodTarget = newEstimate / feedError;
+      that.movePeriodTarget = Math.max(that.movePeriodTarget, 0);
+      that.movePeriodTarget = Math.min(that.movePeriodTarget, that.requestPeriod);
+
+      that.concatMoves(newMoves);
+      that.lastRequestTime = curTime;
     }
     // TODO: handle other cases besides 4/200.
   };
 
   xmlhttp.open("GET", url, true);
   xmlhttp.send();
+  this.requestTime = Date.now();
   this.isRequestInProgress = true;
-  this.lastRequestTime = Date.now();
 }
 
 // Performs moves in the move feed and request more moves when necessary
 GameManager.prototype.processMoveFeed = function () {
   var that = this;
 
+  // Perform the next move in the feed.
   if (this.moveFeed.length > 0)
     this.executeMoveFromFeed();
   
-  if (this.moveFeed.length * this.movePeriod < this.requestPeriod) {
+  // Determine whether to make a new request.
+  if (this.moveFeed.length * this.movePeriod < this.feedTarget + this.roundTrip ||
+      Date.now() - this.lastRequestTime > this.feedTarget) {
     this.requestMoves();
   }
+  
+  // Slowly change the movePeriod towards the movePeriodTarget.
+  var steps = this.moveFeed.length / 10;
+  var change = this.movePeriodTarget - this.movePeriod;
+  var newDelta = 0.5 * (change / steps) + 0.5 * this.movePeriodDelta;
+  if (newDelta + this.movePeriod < 0)
+    newDelta = -this.movePeriod;
+  else if (newDelta + this.movePeriod > this.requestPeriod)
+    newDelta = this.requestPeriod - this.movePeriod;
+  this.movePeriod += newDelta;
+  this.movePeriodDelta = newDelta;
+  console.log(this.movePeriod);
 
+  // Schedule a new move.
   window.setTimeout(function() {
     that.processMoveFeed();
-  }, that.movePeriod);
+  }, this.movePeriod);
 }
 
 // Performs the first move in the move feed
