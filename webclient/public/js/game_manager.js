@@ -17,7 +17,7 @@ function GameManager(size, Actuator, bootFeed) {
 
   this.moveFeed = [];
   this.concatMoves(bootFeed);
-  
+    
   this.setup();
 }
 
@@ -119,7 +119,7 @@ GameManager.prototype.processMoveFeed = function () {
   }
   
   // Slowly change the movePeriod towards the movePeriodTarget.
-  var steps = this.moveFeed.length / 10;
+  var steps = Math.max(1, this.moveFeed.length / 10);
   var change = this.movePeriodTarget - this.movePeriod;
   var newDelta = 0.5 * (change / steps) + 0.5 * this.movePeriodDelta;
   if (newDelta + this.movePeriod < 0)
@@ -128,7 +128,6 @@ GameManager.prototype.processMoveFeed = function () {
     newDelta = this.requestPeriod - this.movePeriod;
   this.movePeriod += newDelta;
   this.movePeriodDelta = newDelta;
-  console.log(this.movePeriod);
 
   // Schedule a new move.
   window.setTimeout(function() {
@@ -251,10 +250,10 @@ GameManager.prototype.move = function (direction) {
 
 GameManager.prototype.getDirection = function (direction) {
   var map = {
-    'up': 0,
-    'right': 1,
-    'down': 2,
-    'left': 3
+    1: 0,  // Up
+    2: 1,  // Right
+    4: 2,  // Down
+    8: 3   // Left
   };
 
   return map[direction];

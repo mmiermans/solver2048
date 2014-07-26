@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Jul 23, 2014 at 07:44 PM
+-- Generation Time: Jul 26, 2014 at 06:48 PM
 -- Server version: 5.5.38-0ubuntu0.14.04.1
 -- PHP Version: 5.5.9-1ubuntu4.3
 
@@ -19,8 +19,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `solver2048`
 --
-CREATE DATABASE IF NOT EXISTS `solver2048` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci;
-USE `solver2048`;
 
 -- --------------------------------------------------------
 
@@ -38,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `games` (
   `board` bigint(20) unsigned zerofill NOT NULL DEFAULT '00000000000000000000' COMMENT 'Board position encoded in 64-bit integer.',
   `move_count` int(11) NOT NULL DEFAULT '0' COMMENT 'Number of moves so far including this move.',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Stores game state and statistics' AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Stores game state and statistics' AUTO_INCREMENT=6 ;
 
 -- --------------------------------------------------------
 
@@ -50,14 +48,16 @@ CREATE TABLE IF NOT EXISTS `moves` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `game_id` bigint(20) NOT NULL,
   `board_before_move` bigint(20) unsigned zerofill NOT NULL DEFAULT '00000000000000000000' COMMENT 'Board before move has been executed.',
-  `move_direction` enum('up','right','down','left') NOT NULL COMMENT 'Move that player performed on board (before new tile was inserted).',
+  `score_before_move` int(11) NOT NULL DEFAULT '0' COMMENT 'Score before move took place.',
+  `move_direction` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT 'Move that player performed on board (before new tile was inserted). Up=1, Right=2, Down=4, Left=8.',
   `move_count` int(11) NOT NULL,
   `new_tile_value` int(11) NOT NULL DEFAULT '2',
   `new_tile_position` int(11) NOT NULL DEFAULT '0' COMMENT 'Position encoded as x+4y.',
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `game_move_index` (`game_id`,`move_count`),
   KEY `game_id` (`game_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Information regarding individual moves.' AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Information regarding individual moves.' AUTO_INCREMENT=25591 ;
 
 --
 -- Constraints for dumped tables

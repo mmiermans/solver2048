@@ -67,6 +67,12 @@ Move::MoveEnum Engine::solve(Board board) {
 	if (BoardLogic::getTile(board, 0, 0) == 0) {
 		baseLookAhead = 1;
 	}
+
+	int tileSum = BoardLogic::sumTiles(board);
+	if (tileSum >= 30800) {
+		baseLookAhead = (int)fmax(6, baseLookAhead);
+	}
+
 	// Increase lookahead in case of locked rows.
 	Board selectedRows = MASK_ROW_FIRST;
 	for (int i = 2; i < BOARD_SIZE; i++) {

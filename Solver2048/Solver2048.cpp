@@ -138,6 +138,7 @@ int main(int argc, char* argv[]) {
 	MySqlConnector mySqlConnector;
 	mySqlConnector.startGame(b, moveCount);
 #endif
+	int startMoveCount = moveCount;
 
 	// Set two random tiles if this is a new game.
 	if (b == 0) {
@@ -147,7 +148,7 @@ int main(int argc, char* argv[]) {
 
 	// Debug variables
 	clock_t lastPrintTime = 0;
-	int lastMoveCount = 0;
+	int lastMoveCount = moveCount;
 	int lastCost = 0;
 	clock_t startTime = clock();
 	int printStep = CLOCKS_PER_SEC;
@@ -209,7 +210,7 @@ int main(int argc, char* argv[]) {
 			cout << "LookAhead: " << maxLookAhead << "\t";
 			maxLookAhead = 0;
 			cout << "Moves/s: " << (CLOCKS_PER_SEC * (moveCount - lastMoveCount)) / (float)(currentTime - lastPrintTime) << "\t";
-			cout << "AvgMoves/s: " << (CLOCKS_PER_SEC * moveCount) / (float)(currentTime - startTime) << "\t";
+			cout << "AvgMoves/s: " << (CLOCKS_PER_SEC * moveCount - startMoveCount) / (float)(currentTime - startTime) << "\t";
 			lastMoveCount = moveCount;
 			int kNodesPerSec = e.cpuTime == 0 ? 9999 : (int)((CLOCKS_PER_SEC * e.nodeCounter) / (1000 * e.cpuTime));
 			cout << "kNodes/s: " << kNodesPerSec << "\t";

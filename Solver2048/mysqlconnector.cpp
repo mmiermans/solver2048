@@ -130,7 +130,7 @@ void MySqlConnector::insertMove(Board before, Board after, Move::MoveEnum move,
 		values += ",";
 	values += "\n(" + Convert<int>::toString(gameId);
 	values += "," + Convert<Board>::toString(before);
-	values += ",'" + getSqlMoveEnum(move);
+	values += ",'" + Convert<int>::toString((int)move);
 	values += "'," + Convert<int>::toString(moveCount);
 	values += "," + Convert<int>::toString(newTileValue);
 	values += "," + Convert<int>::toString(newTilePosition);
@@ -194,21 +194,6 @@ void MySqlConnector::flushQueryBuffer() {
 			"new_tile_value, new_tile_position) VALUES";
 
 	queryBufferFlushTime = clock();
-}
-
-std::string MySqlConnector::getSqlMoveEnum(Move::MoveEnum move) {
-	switch (move) {
-	case Move::Left:
-		return "left";
-	case Move::Right:
-		return "right";
-	case Move::Up:
-		return "up";
-	case Move::Down:
-		return "down";
-	default:
-		return "";
-	}
 }
 
 #endif
