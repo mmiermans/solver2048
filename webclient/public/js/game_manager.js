@@ -4,19 +4,26 @@ function GameManager(size, Actuator, bootFeed) {
 
   this.startTiles     = 2;
 
+  // TODO: set this to 15000 during production.
   this.requestPeriod  = 5000;
   this.isRequestInProgress = false;
   this.lastRequestTime = Date.now();
   
   this.roundTrip = 1000;
 
-  this.movePeriod = 100;
+  this.movePeriod = 200;
   this.movePeriodDelta = 0;
-  this.movePeriodTarget = 100;
-  this.feedTarget = 6 * this.requestPeriod;
+  this.movePeriodTarget = this.movePeriod;
+  this.feedTarget = 3 * this.requestPeriod;
 
   this.moveFeed = [];
-  this.concatMoves(bootFeed);
+  var parsedFeed = this.parseMoveFeed(bootFeed);
+  this.gameInfo = parsedFeed.game;
+  
+  var len = parsedFeed.moves.length;
+  var sliceIndex = Math.max(0, len - 2*(this.requestPeriod / this.movePeriod));
+  this.executedMoves = parsedFeed.moves.slice(0, sliceIndex);
+  this.concatMoves(parsedFeed.moves.slice(sliceIndex, len));
     
   this.setup();
 }
@@ -46,7 +53,7 @@ GameManager.prototype.initGrid = function (m) {
   this.score       = this.calculateScore(m.move_count);
   this.over        = false;
   this.won         = this.hasWon();
-}
+};
 
 // Add moves to feed
 GameManager.prototype.concatMoves = function (moves) {
@@ -57,7 +64,7 @@ GameManager.prototype.concatMoves = function (moves) {
   } else {
     throw "Expecting moves to be an array";
   }
-}
+};
 
 // Perform AJAX request to receive moves
 GameManager.prototype.requestMoves = function () {
@@ -68,7 +75,7 @@ GameManager.prototype.requestMoves = function () {
     return;
   
   var url = "getmovefeed.php?" + encodeQueryData({
-    gameid: this.gameId,
+    gameid: this.gameInfo.id,
     movecount: this.moveFeedEnd
   });
 
@@ -76,7 +83,10 @@ GameManager.prototype.requestMoves = function () {
   // Completion callback
   xmlhttp.onreadystatechange = function() {
     if (xmlhttp.readyState==4 && xmlhttp.status==200) {
-      var newMoves = JSON.parse(xmlhttp.responseText);
+      var json = JSON.parse(xmlhttp.responseText);
+      var parsed = that.parseMoveFeed(json);
+      that.gameInfo = parsed.game;
+      var newMoves = parsed.moves;
       var curTime = Date.now();
       that.isRequestInProgress = false;
       
@@ -102,7 +112,30 @@ GameManager.prototype.requestMoves = function () {
   xmlhttp.send();
   this.requestTime = Date.now();
   this.isRequestInProgress = true;
-}
+};
+
+GameManager.prototype.parseMoveFeed = function(numFeed) {
+  var directionMap = {
+    1: 0,  // Up
+    2: 1,  // Right
+    4: 2,  // Down
+    8: 3   // Left
+  };
+  
+  return {
+    "game": numFeed["game"],
+    "moves": numFeed["moves"].map(function(move) {
+      return {
+        "board_before_move": move[0],
+        "score_before_move": move[1],
+        "direction":         directionMap[move[2]],
+        "move_count":        move[3],
+        "new_tile_value":    move[4],
+        "new_tile_position": move[5]
+      };
+    }),
+  };
+};
 
 // Performs moves in the move feed and request more moves when necessary
 GameManager.prototype.processMoveFeed = function () {
@@ -113,9 +146,11 @@ GameManager.prototype.processMoveFeed = function () {
     this.executeMoveFromFeed();
   
   // Determine whether to make a new request.
-  if (this.moveFeed.length * this.movePeriod < this.feedTarget + this.roundTrip ||
-      Date.now() - this.lastRequestTime > this.feedTarget) {
-    this.requestMoves();
+  if (this.gameInfo.has_ended != 1) {
+    if (this.moveFeed.length * this.movePeriod < this.feedTarget + this.roundTrip ||
+        Date.now() - this.lastRequestTime > this.feedTarget) {
+      this.requestMoves();
+    }
   }
   
   // Slowly change the movePeriod towards the movePeriodTarget.
@@ -133,26 +168,33 @@ GameManager.prototype.processMoveFeed = function () {
   window.setTimeout(function() {
     that.processMoveFeed();
   }, this.movePeriod);
-}
+};
 
 // Performs the first move in the move feed
 GameManager.prototype.executeMoveFromFeed = function () {
   var m = this.moveFeed.shift();
-  
-  this.gameId = m.game_id;
   
   if (this.moveCount + 1 != m.move_count) {
     this.initGrid(m);
   }
   this.moveCount = m.move_count;
 
-  this.move(this.getDirection(m.move_direction));
+  console.log(this.grid.toInt64());
+  
+  this.move(m.direction);
 
   var tile = new Tile(
-    { x: m.tile_position%this.size, y: Math.floor(m.tile_position/this.size) },
-    m.tile_value
+    {
+      x: m.new_tile_position % this.size,
+      y: Math.floor(m.new_tile_position / this.size)
+    },
+    m.new_tile_value
   );
   this.grid.insertTile(tile);
+
+  if (this.moveFeed.length == 0 && this.gameInfo.has_ended) {
+    this.over = true;
+  }
   
   this.moveFeedIndex++;
 
@@ -246,17 +288,6 @@ GameManager.prototype.move = function (direction) {
       this.over = true; // Game over!
     }
   }
-};
-
-GameManager.prototype.getDirection = function (direction) {
-  var map = {
-    1: 0,  // Up
-    2: 1,  // Right
-    4: 2,  // Down
-    8: 3   // Left
-  };
-
-  return map[direction];
 };
 
 // Get the vector representing the chosen direction

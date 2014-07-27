@@ -63,7 +63,7 @@ Move::MoveEnum Engine::solve(Board board) {
 
 	int maxBadTile = maxTileAfterSequence(board);
 
-	int baseLookAhead = (int)fmin(8, fmax(3, maxBadTile - 3));
+	int baseLookAhead = (int)fmin(9, fmax(3, maxBadTile - 3));
 	if (BoardLogic::getTile(board, 0, 0) == 0) {
 		baseLookAhead = 1;
 	}
@@ -94,20 +94,31 @@ Move::MoveEnum Engine::solve(Board board) {
 	//std::cout << baseLookAhead << std::endl;
 
 	unsigned char validMoves = BoardLogic::getValidMoves(board);
+	bool isSingleMove = false;
 	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
 		Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
-		if ((validMoves & move) != 0) {
-			if (move == Move::Down) {
-				dfsLookAhead = 1;
-			} else {
-				dfsLookAhead = baseLookAhead;
-			}
+		if (validMoves == move) {
+			isSingleMove = true;
+			bestMoveIndex = moveIndex;
+		}
+	}
 
-			Board movedBoard = BoardLogic::performMove(board, move);
-			float score = depthFirstSolve(0, movedBoard);
-			if (bestScore > score) {
-				bestScore = score;
-				bestMoveIndex = moveIndex;
+	if (isSingleMove == false) {
+		for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
+			Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
+			if ((validMoves & move) != 0) {
+				if (move == Move::Down) {
+					dfsLookAhead = fmin(5, baseLookAhead);
+				} else {
+					dfsLookAhead = baseLookAhead;
+				}
+
+				Board movedBoard = BoardLogic::performMove(board, move);
+				float score = depthFirstSolve(0, movedBoard);
+				if (bestScore > score) {
+					bestScore = score;
+					bestMoveIndex = moveIndex;
+				}
 			}
 		}
 	}

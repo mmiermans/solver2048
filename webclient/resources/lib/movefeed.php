@@ -6,76 +6,64 @@ $mysqli = new mysqli(
   $config["db"]["password"],
   $config["db"]["dbname"]);
 
-if ($mysqli->connect_errno) {
-  echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+if (mysqli_connect_errno()) {
+    printf("Connect failed: %s\n", mysqli_connect_error());
+    exit();
 }
 
-if (!isset($limit)) {
-  $limit = 1000;
+if (isset($move_count) && isset($game_id)) {
+	$move_count = (int)$move_count;
+	$game_id = (int)$game_id;
+  $query = "CALL get_game_moves({$game_id}, {$move_count})";
+} else {
+  $query = "CALL get_newest_game_moves()";
 }
 
-if (!isset($move_count)) {
-  $move_count = 0;
+if (!$mysqli->multi_query($query)) {
+  echo "CALL failed: (" . $mysqli->errno . ") " . $mysqli->error;
 }
 
-if (!isset($game_id)) {
-  // Get the newest game from the database.
-  $game_id = 0;
+// JSON structure
+$data = array(
+  "game" => array(),
+  "moves" => array(),
+);
 
-  $res = $mysqli->query("SELECT MAX(id) FROM games");
-  $row = $res->fetch_row();
-  if ($row) {
-    $game_id = $row[0];
+// Fetch results
+$resultNum = 0;
+do {
+  if ($res = $mysqli->store_result()) {
+    $rows = $res->fetch_all(MYSQLI_NUM);
+
+    if ($resultNum == 0) {
+      // game
+      $data["game"] = array(
+        "id"        => (int)$rows[0][0],
+        "has_ended" => (int)$rows[0][1]);
+    } else if ($resultNum == 1) {
+      // moves
+      foreach ($rows as $row) {
+        // Convert columns
+        $move = array();
+        array_push($move, ltrim($row[0], '0')); // board_before_move
+        array_push($move, (int)$row[1]);        // score_before_move
+        array_push($move, (int)$row[2]);        // move_direction
+        array_push($move, (int)$row[3]);        // move_count
+        array_push($move, (int)$row[4]);        // new_tile_value
+        array_push($move, (int)$row[5]);        // new_tile_position
+        array_push($data["moves"], $move);
+      }
+    }
+    $resultNum++;
+
+    $res->free();
+  } else {
+    if ($mysqli->errno) {
+      echo "store_result failed: (" . $mysqli->errno . ") " . $mysqli->error;
+    }
   }
-}
+} while ($mysqli->more_results() && $mysqli->next_result());
 
-// Prepare statement
-$query = <<<EOT
-  SELECT
-    `id`, `game_id`, Cast(`board_before_move` as char), `move_direction`,
-    `move_count`, `new_tile_value`, `new_tile_position`, `time`
-  FROM moves
-  WHERE game_id=? AND move_count>=?
-  ORDER BY id ASC
-  LIMIT ?
-EOT;
-$stmt = $mysqli->prepare($query);
-if (!$stmt)  {
-  echo "Prepare failed: (" . $mysqli->errno . ") " . $mysqli->error;
-}
-
-// Bind parameters
-$stmt->bind_param('iii', $game_id, $move_count, $limit);
-
-// Execute statement
-$stmt->execute();
-
-// Bind result columns
-$stmt->bind_result(
-  $col_id,
-  $col_game_id,
-  $col_board_before_move,
-  $col_move_direction,
-  $col_move_count,
-  $col_new_tile_value,
-  $col_new_tile_position,
-  $col_time);
-
-// Fetch values
-$data = array();
-while ($stmt->fetch()) {
-  $m = array();
-  $m['id'] = $col_id;
-  $m['game_id'] = $col_game_id;
-  $m['board_before_move'] = $col_board_before_move;
-  $m['move_direction'] = $col_move_direction;
-  $m['move_count'] = $col_move_count;
-  $m['tile_value'] = $col_new_tile_value;
-  $m['tile_position'] = $col_new_tile_position;
-  
-  array_push($data, $m); 
-}
-
-$stmt->close();
+$mysqli->close();
 
 echo json_encode($data);

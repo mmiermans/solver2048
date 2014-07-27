@@ -34,8 +34,7 @@
       <div class="game-message">
         <p></p>
         <div class="lower">
-	        <a class="keep-playing-button">Keep going</a>
-          <a class="retry-button">Try again</a>
+          <a class="retry-button">Next game!</a>
         </div>
       </div>
 
@@ -72,7 +71,8 @@
     </div>
 
     <p class="game-explanation">
-    Created by <a href="http://miermans.com" target="_blank">Mathijs Miermans.</a> Based on work by <a href="http://gabrielecirulli.com" target="_blank">Gabriele Cirulli.</a> You can play the official game yourself at <a href="http://git.io/2048">http://git.io/2048.</a>
+    <a href="https://github.com/mmiermans/solver2048">A.I.</a> created by <a href="http://miermans.com" target="_blank">Mathijs Miermans.</a>
+    The game 2048 was made by <a href="http://gabrielecirulli.com" target="_blank">Gabriele Cirulli</a> and can played at <a href="http://git.io/2048">http://git.io/2048.</a>
     </p>
   </div>
 

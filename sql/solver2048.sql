@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Jul 26, 2014 at 06:48 PM
+-- Generation Time: Jul 27, 2014 at 05:58 PM
 -- Server version: 5.5.38-0ubuntu0.14.04.1
 -- PHP Version: 5.5.9-1ubuntu4.3
 
@@ -19,6 +19,50 @@ SET time_zone = "+00:00";
 --
 -- Database: `solver2048`
 --
+
+DELIMITER $$
+--
+-- Procedures
+--
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_game_moves`(IN `p_game_id` INT, IN `p_move_count` INT)
+    READS SQL DATA
+BEGIN
+	SELECT `id`, `has_ended`
+	FROM games
+	WHERE id=p_game_id;
+	
+	SELECT
+		Cast(`board_before_move` as char),
+		`score_before_move`,
+		`move_direction`,
+		`move_count`,
+		`new_tile_value`,
+		`new_tile_position`
+	FROM moves
+	WHERE game_id=p_game_id AND move_count>=p_move_count
+	;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_newest_game_moves`()
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	SELECT `id`, `has_ended`
+	FROM games
+	WHERE id=(SELECT MAX(id) FROM games);
+	
+	SELECT
+		Cast(`board_before_move` as char),
+		`score_before_move`,
+		`move_direction`,
+		`move_count`,
+		`new_tile_value`,
+		`new_tile_position`
+	FROM moves
+	WHERE game_id=(SELECT MAX(id) FROM games);
+END$$
+
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -36,7 +80,7 @@ CREATE TABLE IF NOT EXISTS `games` (
   `board` bigint(20) unsigned zerofill NOT NULL DEFAULT '00000000000000000000' COMMENT 'Board position encoded in 64-bit integer.',
   `move_count` int(11) NOT NULL DEFAULT '0' COMMENT 'Number of moves so far including this move.',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Stores game state and statistics' AUTO_INCREMENT=6 ;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Stores game state and statistics' AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -57,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `moves` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `game_move_index` (`game_id`,`move_count`),
   KEY `game_id` (`game_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Information regarding individual moves.' AUTO_INCREMENT=25591 ;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Information regarding individual moves.' AUTO_INCREMENT=1 ;
 
 --
 -- Constraints for dumped tables
