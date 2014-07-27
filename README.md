@@ -48,7 +48,7 @@ Setup the server with the following steps:
 5. Configure the database
   1. Go to [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
   2. Import `solver2048/sql/solver2048_v1.x.sql`
-  3. Create a user (e.g. `solver2048_user`) with select, insert and update privaleges to the database `solver2048`
+  3. Create a user (e.g. `solver2048_user`) with select, insert, update and **execute** privaleges to the database `solver2048`
 6. Adjust the database login info for PHP:
   1. `cd ~/solver2048/webclient/resources`
   2. Create a config file: `cp config-sample.php config.php`
