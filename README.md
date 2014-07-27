@@ -42,12 +42,13 @@ The game engine supports writing its moves in a MySQL database such that the pro
 Setup the server with the following steps:
 
 1. Refresh your package index: `sudo apt-get update`
-2. Install LAMP server: `sudo apt-get install lamp-server^`
-  1. Test that your server works: [http://localhost](http://localhost)
+2. Install LAMP server: `sudo apt-get install lamp-server^ `
+  1. Also install the native MySQL driver for PHP `sudo apt-get install php5-mysqlnd`
+  2. Test that your server works: [http://localhost](http://localhost)
 4. Install phpMyAdmin (select **Apache2** during install): `sudo apt-get install phpmyadmin`
 5. Configure the database
   1. Go to [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
-  2. Import `solver2048/sql/solver2048_v1.x.sql`
+  2. Import `solver2048/sql/solver2048.sql`
   3. Create a user (e.g. `solver2048_user`) with select, insert, update and **execute** privaleges to the database `solver2048`
 6. Adjust the database login info for PHP:
   1. `cd ~/solver2048/webclient/resources`
@@ -60,8 +61,8 @@ Setup the server with the following steps:
 7. Install the MySQL C development libraries: `sudo apt-get install libmysqlclient-dev`
 8. Build the game engine using the make command listed below, with the following adjustments:
   1. Substitute username and password
-  2. Optionally specify the `release` target for better performance
-  3. If necessary add `-DMYSQL_HOSTNAME="foo"`, `-DMYSQL_DATABASE="bar"` and/or `-DMYSQL_PORT=123` to `DEFS`
+  2. If necessary add `-DMYSQL_HOSTNAME="foo"`, `-DMYSQL_DATABASE="bar"` and/or `-DMYSQL_PORT=123` to `DEFS`. The defaults are "localhost", "solver2048" and 0, respectively.
+  3. Optionally specify the `release` target for better performance
 
 ```
 cd ~/solver2048/Solver2048
