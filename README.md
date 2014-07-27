@@ -43,9 +43,9 @@ Setup the server with the following steps:
 
 1. Refresh your package index: `sudo apt-get update`
 2. Install LAMP server: `sudo apt-get install lamp-server^ `
-  1. Also install the native MySQL driver for PHP `sudo apt-get install php5-mysqlnd`
-  2. Test that your server works: [http://localhost](http://localhost)
-4. Install phpMyAdmin (select **Apache2** during install): `sudo apt-get install phpmyadmin`
+  1. Test that your server works: [http://localhost](http://localhost) 
+  2. Also install the native MySQL driver for PHP `sudo apt-get install php5-mysqlnd`
+  3. Install phpMyAdmin (select **Apache2** during install): `sudo apt-get install phpmyadmin`
 5. Configure the database
   1. Go to [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
   2. Import `solver2048/sql/solver2048.sql`
