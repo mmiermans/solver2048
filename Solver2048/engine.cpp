@@ -63,10 +63,10 @@ Move::MoveEnum Engine::solve(Board board) {
 
 	// Based on the highest tile after the increasing sequence.
 	int maxBadTile = maxTileAfterSequence(board);
-	int baseLookAhead = (int)fmax(3, maxBadTile - 3);
+	int baseLookAhead = (int)fmax(3, maxBadTile - 2);
 
 	// Based on empty tiles after moves.
-	int maxEmptyTileCount = BOARD_SIZE_SQ;
+	int maxEmptyTileCount = 0;
 	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
 		Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
 		Board movedBoard = BoardLogic::performMove(board, move);
@@ -75,12 +75,9 @@ Move::MoveEnum Engine::solve(Board board) {
 			maxEmptyTileCount = emptyTileCount;
 		}
 	}
-	if (maxEmptyTileCount <= 3) {
-		baseLookAhead = (int)fmax(baseLookAhead, 9 - maxEmptyTileCount);
+	if (maxEmptyTileCount <= 2 && BoardLogic::getTile(board, 0, 0) >= 13) {
+		baseLookAhead = (int)fmax(baseLookAhead, 11 - maxEmptyTileCount);
 	}
-
-	// Maximum lookahead.
-	baseLookAhead = (int)fmin(10, baseLookAhead);
 
 	if (BoardLogic::getTile(board, 0, 0) == 0) {
 		baseLookAhead = 1;
@@ -101,6 +98,17 @@ Move::MoveEnum Engine::solve(Board board) {
 		if ((moves & ~Move::Down) == 0 && hasEmptyTiles == false) {
 			baseLookAhead += 2;
 		}
+	}
+
+	// Maximum lookahead.
+	if ((board & 0xFFF) == 0xCBA ||
+		(board & 0xFFF) == 0xDCB ||
+		(board & 0xFFF) == 0xEDC) {
+		// A good board deserves a good look ahead.
+		baseLookAhead = (int)fmin(10, baseLookAhead);
+	} else {
+		// This board is not good, restrict the look ahead.
+		baseLookAhead = (int)fmin(8, baseLookAhead);
 	}
 
 	// Bind lookahead to valid range

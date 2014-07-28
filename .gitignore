@@ -6,7 +6,7 @@ x64
 Debug
 /Solver2048/Solver2048
 /Solver2048/Debug
-/Solver2048/Release8
+/Solver2048/Release
 *.o
 *.~
 *.swp

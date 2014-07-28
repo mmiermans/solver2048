@@ -117,7 +117,7 @@ GameManager.prototype.requestMoves = function () {
       var parsed = that.parseMoveFeed(json);
       
       // Only accept games larger than requestMinGame.
-      if (!that.requestMinGame || parsed.game.id > that.requestMinGame) {
+      if (!that.requestMinGame || parsed.game.id >= that.requestMinGame) {
         this.requestMinGame = 0;
         that.gameInfo = parsed.game;
         var newMoves = parsed.moves;
