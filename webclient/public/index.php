@@ -30,8 +30,9 @@
 
     <div class="game-container">
       <div class="game-message">
+		<p>Game over!</p>
         <div class="lower">
-          <a class="next-game-button">Next game!</a>
+          <a class="next-game-button">Next game</a>
         </div>
       </div>
 

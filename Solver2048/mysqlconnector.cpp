@@ -124,6 +124,11 @@ void MySqlConnector::insertMove(Board before, Board after, Move::MoveEnum move,
 	// Add to query buffer.
 	moveCount++;
 
+	gameScore = score;
+	gameMaxTile = maxTile;
+	gameHasEnded = hasEnded;
+	gameBoardAfter = after;
+
 	string values;
 	values.reserve(128);
 	if (queryBufferCount > 0)
@@ -144,10 +149,8 @@ void MySqlConnector::insertMove(Board before, Board after, Move::MoveEnum move,
 			>= (queryBufferTimeTrigger * CLOCKS_PER_SEC));
 	// Flush buffer if triggers are activated.
 	if (isLengthTriggered || isTimeTriggered || hasEnded) {
-		queryBuffer += ";\n";
-		queryBuffer += getUpdateGameQuery(score, maxTile, hasEnded, after);
 		// Send the query to MySQL
-		flushQueryBuffer();
+		flush();
 	}
 }
 
@@ -165,6 +168,9 @@ const string MySqlConnector::getUpdateGameQuery(int score, int maxTile,
 }
 
 void MySqlConnector::flush() {
+	queryBuffer += ";\n";
+	queryBuffer += getUpdateGameQuery(gameScore, gameMaxTile, gameHasEnded, gameBoardAfter);
+
 	flushQueryBuffer();
 }
 

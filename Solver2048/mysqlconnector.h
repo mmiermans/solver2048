@@ -48,6 +48,11 @@ private:
 	int gameId;
 	int moveCount;
 
+	int gameScore;
+	int gameMaxTile;
+	bool gameHasEnded;
+	Board gameBoardAfter;
+
 	std::string queryBuffer;
 	int queryBufferCount;
 	clock_t queryBufferFlushTime;

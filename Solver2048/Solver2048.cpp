@@ -17,8 +17,6 @@
 
 using namespace std;
 
-#define ENABLE_STDOUT
-
 void askTile(Board& board) {
 	int x = 0;
 	int y = 0;
@@ -27,7 +25,7 @@ void askTile(Board& board) {
 	cin >> x;
 	cin >> y;
 	cin >> tile;
-	tile = (Tile)round(log2((double)tile));
+	tile = (Tile) round(log2((double) tile));
 	BoardLogic::setTile(board, x, y, tile);
 }
 
@@ -58,9 +56,11 @@ void playSimpleStrategy() {
 					} else {
 						Move::MoveEnum moveA = Move::Left;
 						Move::MoveEnum moveB = Move::Right;
-						Tile firstRowLastTile = (b >> (3 * TILE_BITS)) & TILE_MASK;
+						Tile firstRowLastTile = (b >> (3 * TILE_BITS))
+								& TILE_MASK;
 						if (firstRowLastTile >= 1) {
-							if (((firstRowLastTile * MASK_ROW_LSB) + 0x0123) == (b & MASK_ROW_FIRST)) {
+							if (((firstRowLastTile * MASK_ROW_LSB) + 0x0123)
+									== (b & MASK_ROW_FIRST)) {
 								moveA = Move::Right;
 								moveB = Move::Left;
 							}
@@ -86,7 +86,8 @@ void playSimpleStrategy() {
 		}
 
 		clock_t endTime = clock();
-		cout << (CLOCKS_PER_SEC * moveCount) / (endTime - startTime) << " moves/s" << endl;
+		cout << (CLOCKS_PER_SEC * moveCount) / (endTime - startTime)
+				<< " moves/s" << endl;
 
 		delete sn;
 	}
@@ -98,9 +99,10 @@ void printChildBoards(SearchNode& sn) {
 			for (int j = 0; j < sn.childCount[i][v]; j++) {
 				ChildNode& childNode = sn.children[i][j][v];
 				Board childBoard = childNode.board;
-				cout << "Value: " << (1 << (v + 1)) << "\tPositions: " << (int)childNode.positions[0];
+				cout << "Value: " << (1 << (v + 1)) << "\tPositions: "
+						<< (int) childNode.positions[0];
 				for (int k = 1; k < 4 && childNode.positions[k] > 0; k++) {
-					cout << ", " << (int)childNode.positions[k];
+					cout << ", " << (int) childNode.positions[k];
 				}
 				const char* moveNames[4] = { "Up", "Right", "Down", "Left" };
 				cout << "\tMove: " << moveNames[i] << endl;
@@ -112,119 +114,139 @@ void printChildBoards(SearchNode& sn) {
 
 void precomputeMoves() {
 	for (int i = 0; i < 1 << 16; i++) {
-		Board iBoard = (Board)i;
+		Board iBoard = (Board) i;
 		Board result = BoardLogic::performMove(iBoard, Move::Right);
 
 		if ((result & ~0xFFFF) != 0)
 			result = 0xFFFF;
 
-		cout << "0x" << std::hex << setw(4) << uppercase << setfill('0') << result;
+		cout << "0x" << std::hex << setw(4) << uppercase << setfill('0')
+				<< result;
 		if (i != (1 << 16) - 1)
 			cout << ", ";
-			if (i % 16 == 15)
-				cout << " \\\\" << endl;
+		if (i % 16 == 15)
+			cout << " \\\\" << endl;
 	}
 }
 
 int main(int argc, char* argv[]) {
 	BitMath::sanityCheck();
+	MySqlConnector mySqlConnector;
 
 	Engine e;
 
-	Board b = 0;
-	int moveCount = 0;
+	// RESTART GAME LOOP
+	while (true) {
+		Board b = 0;
+		int moveCount = 0;
 
 #ifdef ENABLE_MYSQL
-	MySqlConnector mySqlConnector;
-	mySqlConnector.startGame(b, moveCount);
+		mySqlConnector.startGame(b, moveCount);
 #endif
-	int startMoveCount = moveCount;
+		int startMoveCount = moveCount;
 
-	// Set two random tiles if this is a new game.
-	if (b == 0) {
-		e.setRandomTile(b);
-		e.setRandomTile(b);
-	}
+		// Set two random tiles if this is a new game.
+		if (b == 0) {
+			e.setRandomTile(b);
+			e.setRandomTile(b);
+		}
 
-	// Debug variables
-	clock_t lastPrintTime = 0;
-	int lastMoveCount = moveCount;
-	int lastCost = 0;
-	clock_t startTime = clock();
-	int printStep = CLOCKS_PER_SEC;
-	int maxLookAhead = 0;
-	clock_t currentTime;
+		// Debug variables
+		int lastMoveCount = moveCount;
+		int lastCost = 0;
+		clock_t startTime = clock();
+		clock_t lastPrintTime = startTime;
+		int printStep = CLOCKS_PER_SEC;
+		int maxLookAhead = 0;
+		clock_t currentTime;
 
-	// Main game loop
-	bool hasValidMove = true;
-	while (hasValidMove) {
-		// Let game engine perform evaluation on board b.
-		Move::MoveEnum bestMove = e.solve(b);
+		// Main game loop
+		bool hasValidMove = true;
+		while (hasValidMove) {
+			// Let game engine perform evaluation on board b.
+			Move::MoveEnum bestMove = e.solve(b);
 
-		// Execute move.
-		Board boardBefore = b;
-		moveCount++;
-		b = BoardLogic::performMove(b, bestMove);
+			// Execute move.
+			Board boardBefore = b;
+			moveCount++;
 
-		// Insert new random tile.
-		int newTilePosition = 0;
-		Tile newTileValue = 0;
-		e.getRandomTile(b, newTilePosition, newTileValue);
-		BoardLogic::setTile(b, newTilePosition, newTileValue);
-		assert(boardBefore != b);
+			b = BoardLogic::performMove(b, bestMove);
 
-		// Gameover?
-		hasValidMove = (BoardLogic::getValidMoves(b) != (Move::MoveEnum)0);
+			// Insert new random tile.
+			int newTilePosition = 0;
+			Tile newTileValue = 0;
+			e.getRandomTile(b, newTilePosition, newTileValue);
+			BoardLogic::setTile(b, newTilePosition, newTileValue);
+			assert(boardBefore != b);
 
-		int score = BoardLogic::calculateScore(b, moveCount);
+			// Gameover?
+			hasValidMove = (BoardLogic::getValidMoves(b) != (Move::MoveEnum) 0);
+
+			int score = BoardLogic::calculateScore(b, moveCount);
 
 #ifdef ENABLE_MYSQL
-		int maxTile = BoardLogic::maxTile(b);
-		// Add move to MySQL database
-		mySqlConnector.insertMove(
-				boardBefore,
-				b,
-				bestMove,
-				newTilePosition / TILE_BITS,
-				1 << newTileValue,
-				score,
-				maxTile,
-				!hasValidMove);
+			int maxTile = BoardLogic::maxTile(b);
+			// Add move to MySQL database
+			mySqlConnector.insertMove(
+					boardBefore,
+					b,
+					bestMove,
+					newTilePosition / TILE_BITS,
+					1 << newTileValue,
+					score,
+					maxTile,
+					!hasValidMove);
 #endif
 
 #ifdef ENABLE_STDOUT
-		// Debug info
-		if (e.dfsLookAhead > maxLookAhead)
-			maxLookAhead = e.dfsLookAhead;
-		int cost = e.evaluateBoard(b);
-		currentTime = clock();
-		if (cost - lastCost > 1024 || hasValidMove == false || currentTime - lastPrintTime >= printStep) {
-			// Game statistics
-			cout << "Moves: " << moveCount << "\t";
-			cout << "Time: " << (currentTime - startTime) / CLOCKS_PER_SEC << "s\t";
-			cout << "Score: " << score << "\t";
-			cout << "BoardCost: " << cost;
-			cout << endl;
+			// Debug info
+			if (e.dfsLookAhead > maxLookAhead)
+				maxLookAhead = e.dfsLookAhead;
+			int cost = e.evaluateBoard(b);
+			currentTime = clock();
+			if (cost - lastCost > 1024 ||
+				hasValidMove == false ||
+				moveCount == 1 ||
+				currentTime - lastPrintTime >= printStep) {
+				// Game statistics
+				cout << "Moves: " << moveCount << "\t";
+				cout << "Time: " << (currentTime - startTime) / CLOCKS_PER_SEC
+						<< "s\t";
+				cout << "Score: " << score << "\t";
+				cout << "BoardCost: " << cost;
+				cout << endl;
 
-			// Engine performance statistics
-			cout << "LookAhead: " << maxLookAhead << "\t";
-			maxLookAhead = 0;
-			cout << "Moves/s: " << (CLOCKS_PER_SEC * (moveCount - lastMoveCount)) / (float)(currentTime - lastPrintTime) << "\t";
-			cout << "AvgMoves/s: " << (CLOCKS_PER_SEC * moveCount - startMoveCount) / (float)(currentTime - startTime) << "\t";
-			lastMoveCount = moveCount;
-			int kNodesPerSec = e.cpuTime == 0 ? 9999 : (int)((CLOCKS_PER_SEC * e.nodeCounter) / (1000 * e.cpuTime));
-			cout << "kNodes/s: " << kNodesPerSec << "\t";
-			cout << endl;
+				// Engine performance statistics
+				cout << "LookAhead: " << maxLookAhead << "\t";
+				maxLookAhead = 0;
+				cout << "Moves/s: "
+						<< (CLOCKS_PER_SEC * (moveCount - lastMoveCount))
+								/ (float) (currentTime - lastPrintTime) << "\t";
+				cout << "AvgMoves/s: "
+						<< (CLOCKS_PER_SEC * (moveCount - startMoveCount))
+								/ (float) (currentTime - startTime) << "\t";
+				lastMoveCount = moveCount;
+				int kNodesPerSec =
+						e.cpuTime == 0 ?
+								9999 :
+								(int) ((CLOCKS_PER_SEC * e.nodeCounter)
+										/ (1000 * e.cpuTime));
+				cout << "kNodes/s: " << kNodesPerSec << "\t";
+				cout << endl;
 
-			BoardLogic::printBoard(b);
-			cout << endl;
-			lastPrintTime = currentTime;
-			lastCost = cost;
-		}
+				BoardLogic::printBoard(b);
+				cout << endl;
+				lastPrintTime = currentTime;
+				lastCost = cost;
+			}
 #endif
-	}
+		}
 
-	cout << "GAME OVER.";
+		mySqlConnector.flush();
+
+		cout << "GAME OVER." << endl << endl;
+		cout << "RESTARTING..." << endl << endl;
+	}
 
 	return 0;
 }

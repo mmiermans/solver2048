@@ -17,9 +17,29 @@ function GameManager(size, InputManager, Actuator, bootFeed) {
 
 // Continue to the next game
 GameManager.prototype.nextGame = function () {
+  this.requestMinGame = this.gameInfo.id + 1;
+  
   this.actuator.continueGame(); // Clear the game won/lost message
   
+  this.initGrid();
   this.setup();
+  
+  this.requestMoves();
+};
+
+// Initialize grid to first move in feed
+GameManager.prototype.initGrid = function (m) {
+  if (m) {
+    this.grid        = new Grid(this.size, m.board_before_move);
+    this.score       = this.calculateScore(m.move_count);
+    this.over        = false;
+    this.won         = this.hasWon();
+  } else {
+    this.grid        = new Grid(this.size);
+    this.score       = 0;
+    this.over        = false;
+    this.won         = false;
+  }
 };
 
 // Return true if the game is lost, or has won and the user hasn't kept playing
@@ -48,6 +68,7 @@ GameManager.prototype.setup = function (bootFeed, enableTimer) {
     var sliceIndex = Math.max(0, len - 2*(this.requestPeriod / this.movePeriod));
     this.executedMoves = parsedFeed.moves.slice(0, sliceIndex);
     this.concatMoves(parsedFeed.moves.slice(sliceIndex, len));
+  } else {
   }
 
   if (enableTimer) {
@@ -56,14 +77,6 @@ GameManager.prototype.setup = function (bootFeed, enableTimer) {
 
   // Update the actuator
   this.actuate();
-};
-
-// Initialize grid to first move in feed
-GameManager.prototype.initGrid = function (m) {
-  this.grid        = new Grid(this.size, m.board_before_move);
-  this.score       = this.calculateScore(m.move_count);
-  this.over        = false;
-  this.won         = this.hasWon();
 };
 
 // Add moves to feed
@@ -82,14 +95,14 @@ GameManager.prototype.requestMoves = function () {
   var that = this;
   
   // Prevent too many requests from happening.
-  if (this.gameInfo) {
+  if (!this.requestMinGame) {
     if (this.isRequestInProgress || Date.now() - this.lastRequestTime < this.requestPeriod)
       return;
   }
   
   // Build URL
   var url = "getmovefeed.php"
-  if (this.gameInfo && this.gameInfo.id && this.moveFeedEnd) {
+  if (this.gameInfo && this.gameInfo.id && this.moveFeedEnd !== undefined) {
     url += "?" + encodeQueryData({
       gameid: this.gameInfo.id,
       movecount: this.moveFeedEnd
@@ -102,24 +115,30 @@ GameManager.prototype.requestMoves = function () {
     if (xmlhttp.readyState==4 && xmlhttp.status==200) {
       var json = JSON.parse(xmlhttp.responseText);
       var parsed = that.parseMoveFeed(json);
-      that.gameInfo = parsed.game;
-      var newMoves = parsed.moves;
-      var curTime = Date.now();
-      that.isRequestInProgress = false;
       
-      // Estimate roundtrip
-      that.roundTrip = curTime - that.requestTime;
-      
-      // Estimate milliseconds/move
-      var requestDelta = curTime - that.lastRequestTime;
-      var newEstimate = Math.min(5000, requestDelta / (newMoves.length + 0.5));
-      var avgPeriod = (newEstimate + that.movePeriod) / 2;
-      var feedError = ((that.moveFeed.length + 0.5) * avgPeriod) / that.feedTarget;
-      that.movePeriodTarget = newEstimate / feedError;
-      that.movePeriodTarget = Math.max(that.movePeriodTarget, 0);
-      that.movePeriodTarget = Math.min(that.movePeriodTarget, that.requestPeriod);
+      // Only accept games larger than requestMinGame.
+      if (!that.requestMinGame || parsed.game.id > that.requestMinGame) {
+        this.requestMinGame = 0;
+        that.gameInfo = parsed.game;
+        var newMoves = parsed.moves;
+        var curTime = Date.now();
+        that.isRequestInProgress = false;
+        
+        // Estimate roundtrip
+        that.roundTrip = curTime - that.requestTime;
+        
+        // Estimate milliseconds/move
+        var requestDelta = Math.max(0, curTime - that.lastRequestTime - (that.requestPeriod / 2));
+        var newEstimate = Math.min(2000, requestDelta / (newMoves.length + 0.5));
+        var avgPeriod = (newEstimate + that.movePeriod) / 2;
+        var feedError = ((that.moveFeed.length + 0.5) * avgPeriod) / that.feedTarget;
+        that.movePeriodTarget = newEstimate / feedError;
+        that.movePeriodTarget = Math.max(that.movePeriodTarget, 0);
+        that.movePeriodTarget = Math.min(that.movePeriodTarget, that.requestPeriod);
 
-      that.concatMoves(newMoves);
+        that.concatMoves(newMoves);
+      }
+      
       that.lastRequestTime = curTime;
     }
     // TODO: handle other cases besides 4/200.
@@ -157,34 +176,40 @@ GameManager.prototype.parseMoveFeed = function(numFeed) {
 // Performs moves in the move feed and request more moves when necessary
 GameManager.prototype.processMoveFeed = function () {
   var that = this;
-
-  // Perform the next move in the feed.
-  if (this.moveFeed.length > 0)
-    this.executeMoveFromFeed();
   
   // Determine whether to make a new request.
-  if (this.gameInfo.has_ended != 1) {
+  if (!this.gameInfo) {
+      this.requestMoves();
+  } else if (this.gameInfo.has_ended != 1) {
     if (this.moveFeed.length * this.movePeriod < this.feedTarget + this.roundTrip ||
         Date.now() - this.lastRequestTime > this.feedTarget) {
       this.requestMoves();
     }
   }
-  
-  // Slowly change the movePeriod towards the movePeriodTarget.
-  var steps = Math.max(1, this.moveFeed.length / 10);
-  var change = this.movePeriodTarget - this.movePeriod;
-  var newDelta = 0.5 * (change / steps) + 0.5 * this.movePeriodDelta;
-  if (newDelta + this.movePeriod < 0)
-    newDelta = -this.movePeriod;
-  else if (newDelta + this.movePeriod > this.requestPeriod)
-    newDelta = this.requestPeriod - this.movePeriod;
-  this.movePeriod += newDelta;
-  this.movePeriodDelta = newDelta;
+
+  // Perform the next move in the feed.
+  var timeoutPeriod = 1000;
+  if (this.moveFeed.length > 0) {
+    this.executeMoveFromFeed();
+    
+    // Slowly change the movePeriod towards the movePeriodTarget.
+    var steps = Math.max(1, this.moveFeed.length / 10);
+    var change = this.movePeriodTarget - this.movePeriod;
+    var newDelta = 0.5 * (change / steps) + 0.5 * this.movePeriodDelta;
+    if (newDelta + this.movePeriod < 0)
+      newDelta = -this.movePeriod;
+    else if (newDelta + this.movePeriod > this.requestPeriod)
+      newDelta = this.requestPeriod - this.movePeriod;
+    this.movePeriod += newDelta;
+    this.movePeriodDelta = newDelta;
+    
+    timeoutPeriod = this.movePeriod;
+  }
 
   // Schedule a new move.
   window.setTimeout(function() {
     that.processMoveFeed();
-  }, this.movePeriod);
+  }, timeoutPeriod);
 };
 
 // Performs the first move in the move feed
@@ -218,14 +243,15 @@ GameManager.prototype.executeMoveFromFeed = function () {
 
 // Sends the updated grid to the actuator
 GameManager.prototype.actuate = function () {
-  this.actuator.actuate(this.grid, {
-    score:      this.score,
-    over:       this.over,
-    won:        this.won,
-    bestScore:  1234, // TODO
-    terminated: this.isGameTerminated()
-  });
-
+  if (this.grid) {
+    this.actuator.actuate(this.grid, {
+      score:      this.score,
+      over:       this.over,
+      won:        this.won,
+      bestScore:  1234, // TODO
+      terminated: this.isGameTerminated()
+    });
+  }
 };
 
 // Save all tile positions and remove merger info

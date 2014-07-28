@@ -47,6 +47,8 @@ public:
 	/// <returns>Board with empty tiles equal to TILE_MASK</returns>
 	static Board getEmptyMask(Board board);
 
+	static int getEmptyCount(Board board) { return BitMath::popCount(getEmptyMask(board)) / TILE_BITS; }
+
 	/// <summary>
 	/// Determines whether a board has empty tiles.
 	/// </summary>

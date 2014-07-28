@@ -61,9 +61,27 @@ Move::MoveEnum Engine::solve(Board board) {
 	float bestScore = MAX_SCORE;
 	int bestMoveIndex = 0;
 
+	// Based on the highest tile after the increasing sequence.
 	int maxBadTile = maxTileAfterSequence(board);
+	int baseLookAhead = (int)fmax(3, maxBadTile - 3);
 
-	int baseLookAhead = (int)fmin(9, fmax(3, maxBadTile - 3));
+	// Based on empty tiles after moves.
+	int maxEmptyTileCount = BOARD_SIZE_SQ;
+	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
+		Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
+		Board movedBoard = BoardLogic::performMove(board, move);
+		int emptyTileCount = BoardLogic::getEmptyCount(movedBoard);
+		if (emptyTileCount > maxEmptyTileCount) {
+			maxEmptyTileCount = emptyTileCount;
+		}
+	}
+	if (maxEmptyTileCount <= 3) {
+		baseLookAhead = (int)fmax(baseLookAhead, 9 - maxEmptyTileCount);
+	}
+
+	// Maximum lookahead.
+	baseLookAhead = (int)fmin(10, baseLookAhead);
+
 	if (BoardLogic::getTile(board, 0, 0) == 0) {
 		baseLookAhead = 1;
 	}

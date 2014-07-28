@@ -1,9 +1,12 @@
 /Debug
+/Release
 /ipch
 /x64
 x64
 Debug
 /Solver2048/Solver2048
+/Solver2048/Debug
+/Solver2048/Release8
 *.o
 *.~
 *.swp
