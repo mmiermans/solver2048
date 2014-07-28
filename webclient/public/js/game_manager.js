@@ -1,36 +1,24 @@
-function GameManager(size, Actuator, bootFeed) {
+function GameManager(size, InputManager, Actuator, bootFeed) {
   this.size           = size; // Size of the grid
   this.actuator       = new Actuator;
+  this.inputManager   = new InputManager;
 
   this.startTiles     = 2;
+
+  this.inputManager.on("nextGame", this.nextGame.bind(this));
 
   // TODO: set this to 15000 during production.
   this.requestPeriod  = 5000;
   this.isRequestInProgress = false;
   this.lastRequestTime = Date.now();
   
-  this.roundTrip = 1000;
-
-  this.movePeriod = 200;
-  this.movePeriodDelta = 0;
-  this.movePeriodTarget = this.movePeriod;
-  this.feedTarget = 3 * this.requestPeriod;
-
-  this.moveFeed = [];
-  var parsedFeed = this.parseMoveFeed(bootFeed);
-  this.gameInfo = parsedFeed.game;
-  
-  var len = parsedFeed.moves.length;
-  var sliceIndex = Math.max(0, len - 2*(this.requestPeriod / this.movePeriod));
-  this.executedMoves = parsedFeed.moves.slice(0, sliceIndex);
-  this.concatMoves(parsedFeed.moves.slice(sliceIndex, len));
-    
-  this.setup();
+  this.setup(bootFeed, true);
 }
 
-// Restart the game
-GameManager.prototype.restart = function () {
+// Continue to the next game
+GameManager.prototype.nextGame = function () {
   this.actuator.continueGame(); // Clear the game won/lost message
+  
   this.setup();
 };
 
@@ -40,8 +28,31 @@ GameManager.prototype.isGameTerminated = function () {
 };
 
 // Set up the game
-GameManager.prototype.setup = function () {
-  this.processMoveFeed();
+GameManager.prototype.setup = function (bootFeed, enableTimer) {
+  this.roundTrip = 1000;
+
+  this.movePeriod = 200;
+  this.movePeriodDelta = 0;
+  this.movePeriodTarget = this.movePeriod;
+  this.feedTarget = 3 * this.requestPeriod;
+
+  this.moveFeed = [];
+  this.moveFeedEnd = 0;
+  this.gameInfo = null;
+  
+  if (bootFeed) {
+    var parsedFeed = this.parseMoveFeed(bootFeed);
+    this.gameInfo = parsedFeed.game;
+    
+    var len = parsedFeed.moves.length;
+    var sliceIndex = Math.max(0, len - 2*(this.requestPeriod / this.movePeriod));
+    this.executedMoves = parsedFeed.moves.slice(0, sliceIndex);
+    this.concatMoves(parsedFeed.moves.slice(sliceIndex, len));
+  }
+
+  if (enableTimer) {
+    this.processMoveFeed();
+  }
 
   // Update the actuator
   this.actuate();
@@ -70,14 +81,20 @@ GameManager.prototype.concatMoves = function (moves) {
 GameManager.prototype.requestMoves = function () {
   var that = this;
   
-  // Don't handle two requests at the same time.
-  if (this.isRequestInProgress || Date.now() - this.lastRequestTime < this.requestPeriod)
-    return;
+  // Prevent too many requests from happening.
+  if (this.gameInfo) {
+    if (this.isRequestInProgress || Date.now() - this.lastRequestTime < this.requestPeriod)
+      return;
+  }
   
-  var url = "getmovefeed.php?" + encodeQueryData({
-    gameid: this.gameInfo.id,
-    movecount: this.moveFeedEnd
-  });
+  // Build URL
+  var url = "getmovefeed.php"
+  if (this.gameInfo && this.gameInfo.id && this.moveFeedEnd) {
+    url += "?" + encodeQueryData({
+      gameid: this.gameInfo.id,
+      movecount: this.moveFeedEnd
+    });
+  }
 
   xmlhttp = new XMLHttpRequest();
   // Completion callback
@@ -179,8 +196,6 @@ GameManager.prototype.executeMoveFromFeed = function () {
   }
   this.moveCount = m.move_count;
 
-  console.log(this.grid.toInt64());
-  
   this.move(m.direction);
 
   var tile = new Tile(

@@ -2,19 +2,17 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>2048</title>
+  <title>Solver2048</title>
 
   <link href="style/main.css" rel="stylesheet" type="text/css">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="meta/apple-touch-icon.png">
-  <link rel="apple-touch-startup-image" href="meta/apple-touch-startup-image-640x1096.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)"> <!-- iPhone 5+ -->
-  <link rel="apple-touch-startup-image" href="meta/apple-touch-startup-image-640x920.png"  media="(device-width: 320px) and (device-height: 480px) and (-webkit-device-pixel-ratio: 2)"> <!-- iPhone, retina -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
   <meta name="HandheldFriendly" content="True">
   <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0, maximum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, minimal-ui">
 </head>
 <body>
   <div class="container">
@@ -27,14 +25,13 @@
     </div>
 
     <div class="above-game">
-      <p class="game-intro">Watch a <strong>live feed</strong> of a computer playing 2048!</p>
+      <p class="game-intro">Watch a <strong>live stream</strong> of a computer playing 2048!</p>
     </div>
 
     <div class="game-container">
       <div class="game-message">
-        <p></p>
         <div class="lower">
-          <a class="retry-button">Next game!</a>
+          <a class="next-game-button">Next game!</a>
         </div>
       </div>
 
@@ -80,6 +77,7 @@
   <script src="js/bind_polyfill.js"></script>
   <script src="js/classlist_polyfill.js"></script>
   <script src="js/animframe_polyfill.js"></script>
+  <script src="js/keyboard_input_manager.js"></script>
   <script src="js/html_actuator.js"></script>
   <script src="js/grid.js"></script>
   <script src="js/tile.js"></script>
