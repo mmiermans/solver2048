@@ -14,7 +14,11 @@ function GameManager(size, InputManager, Actuator, bootFeed) {
   
   this.setup(bootFeed, true);
   
-  this.actuator.loadMaxTileChart(bootFeed["stats"]);
+  this.stats = bootFeed["stats"];
+  this.actuator.loadCharts(this.stats);
+  this.bestScore = Math.max.apply(null, this.stats.score);
+
+  window.actuator = this.actuator;
 }
 
 // Continue to the next game
@@ -235,6 +239,7 @@ GameManager.prototype.executeMoveFromFeed = function () {
 
   if (this.moveFeed.length == 0 && this.gameInfo.has_ended) {
     this.over = true;
+    this.actuator.updateCharts(this.stats, this.getMaxTile(), this.score);
   }
   
   this.moveFeedIndex++;
@@ -249,7 +254,7 @@ GameManager.prototype.actuate = function () {
       score:      this.score,
       over:       this.over,
       won:        this.won,
-      bestScore:  1234, // TODO
+      bestScore:  this.bestScore,
       terminated: this.isGameTerminated()
     });
   }
@@ -311,6 +316,7 @@ GameManager.prototype.move = function (direction) {
 
           // Update the score
           self.score += merged.value;
+          self.bestScore = Math.max(self.bestScore, self.score);
 
           // The mighty 2048 tile
           if (merged.value === 2048) self.won = true;
@@ -408,6 +414,15 @@ GameManager.prototype.tileMatchesAvailable = function () {
 
   return false;
 };
+
+// Calculate score from grid
+GameManager.prototype.getMaxTile = function() {
+  var maxTile = 0;
+  this.grid.eachCell(function (x, y, tile) {
+    maxTile = Math.max(maxTile, tile);
+  });
+  return maxTile;
+}
 
 // Calculate score from grid
 GameManager.prototype.calculateScore = function (moveCount) {

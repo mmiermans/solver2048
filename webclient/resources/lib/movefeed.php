@@ -13,30 +13,52 @@ if (mysqli_connect_errno()) {
 
 // JSON structure
 $data = array(
-  "stats" => array(),
+  "stats" => array(
+    "max_tile" => array(),
+    "score" => array(),
+  ),
   "game" => array(),
   "moves" => array(),
 );
 
 // Fetch game statistics
-$statsQuery = <<<'EOD'
+if (isset($fetchGameStats) && $fetchGameStats) {
+$maxTileQuery = <<<'EOD'
 SELECT max_tile, COUNT(*) AS count
 FROM games
 WHERE games.has_ended = 1
 GROUP BY max_tile
 EOD;
-if (isset($fetchGameStats) && $fetchGameStats) {
-  $result = $mysqli->query($statsQuery);
+
+  $result = $mysqli->query($maxTileQuery);
   if (!$result) {
     echo "CALL failed: (" . $mysqli->errno . ") " . $mysqli->error;
   }
   
   while ($row = $result->fetch_row()) {
     $x = array((int)$row[0], (int)$row[1]);
-    array_push($data["stats"], $x);
+    array_push($data["stats"]["max_tile"], $x);
   }
 
   $result->close();
+
+$scoreQuery = <<<'EOD'
+SELECT score
+FROM games
+WHERE games.has_ended = 1
+EOD;
+
+  $result = $mysqli->query($scoreQuery);
+  if (!$result) {
+    echo "CALL failed: (" . $mysqli->errno . ") " . $mysqli->error;
+  }
+  
+  while ($row = $result->fetch_row()) {
+    array_push($data["stats"]["score"], (int)$row[0]);
+  }
+
+  $result->close();
+
 }
 
 // Fetch move feed

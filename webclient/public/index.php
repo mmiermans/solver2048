@@ -70,17 +70,19 @@
     
     <p class="game-explanation">
       <h2>Performance statistics</h2>
-      <div id="max-tile-chart" style="width:100%; height:400px;"></div>
+      <div id="max-tile-chart" class="chart" style="width:100%; height:400px;"></div>
+      <div id="score-chart" class="chart" style="width:100%; height:400px;"></div>
     </p>
 
     <p class="game-explanation">
-    <a href="https://github.com/mmiermans/solver2048">A.I.</a> created by <a href="http://miermans.com" target="_blank">Mathijs Miermans.</a>
-    The game 2048 was made by <a href="http://gabrielecirulli.com" target="_blank">Gabriele Cirulli</a> and can played at <a href="http://git.io/2048">http://git.io/2048.</a>
+    <a href="https://github.com/mmiermans/solver2048">Solver2048 engine</a> created by <a href="http://miermans.com" target="_blank">Mathijs Miermans.</a></br>
+    <a href="http://git.io/2048">Original game</a> made by <a href="http://gabrielecirulli.com" target="_blank">Gabriele Cirulli.</a>
     </p>
   </div>
 
   <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-  <script src="js/highcharts/highcharts.js"></script>
+  <script src="js/highcharts/highcharts.src.js"></script>
+  <script src="js/highcharts/highcharts-more.src.js"></script>
   <script src="js/highcharts/themes/theme2048.js"></script>
 
   <script src="js/bignumber.min.js"></script>

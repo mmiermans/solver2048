@@ -139,29 +139,31 @@ HTMLActuator.prototype.clearMessage = function () {
   this.messageContainer.classList.remove("game-over");
 };
 
-HTMLActuator.prototype.loadMaxTileChart = function (data) {
+HTMLActuator.prototype.loadCharts = function (data) {
   if (!data || data.length == 0) return;
   
+  var maxTileData = data["max_tile"];
   var minCat = 1<<16;
   var maxCat = 2;
-  for (var i = 0; i < data.length; i++) {
-    minCat = Math.min(minCat, data[i][0]);
-    maxCat = Math.max(maxCat, data[i][0]);
+  for (var i = 0; i < maxTileData.length; i++) {
+    minCat = Math.min(minCat, maxTileData[i][0]);
+    maxCat = Math.max(maxCat, maxTileData[i][0]);
   }
   
-  var categories = [];
-  var seriesData = [];
+  var maxTileCategories = [];
+  var maxTileSeries = [];
   for (var i = minCat, j = 0; i <= maxCat; i *= 2) {
     var name = i.toString();
-    categories.push(name);
+    maxTileCategories.push(name);
     var y = 0;
-    if (j < data.length && data[j][0] == i) {
-      y = data[j][1];
+    if (j < maxTileData.length && maxTileData[j][0] == i) {
+      y = maxTileData[j][1];
       j++;
     }
-    seriesData.push(y);
+    var logI = Math.round(Math.log(i)/Math.log(2));
+    maxTileSeries.push({name:name, x:logI, y:y});
   }
-  
+
   $('#max-tile-chart').highcharts({
     chart: {
       type: 'column',
@@ -174,10 +176,10 @@ HTMLActuator.prototype.loadMaxTileChart = function (data) {
       enabled: false,
     },
     xAxis: {
+      type: 'category',
       title: {
         text: 'Maximum tile',
       },
-      categories: categories,
     },
     yAxis: {
       title: {
@@ -187,7 +189,118 @@ HTMLActuator.prototype.loadMaxTileChart = function (data) {
     },
     series: [{
       name: 'Number of games',
-      data: seriesData,
+      data: maxTileSeries,
     }]
   });
+  
+  this.loadScoreChart(data.score);
 };
+
+HTMLActuator.prototype.loadScoreChart = function (scoreData) {
+  scoreData.sort(function(a, b){return a-b});
+  
+  var scoreLen = scoreData.length
+  var sum = scoreData.reduce(function(a, b) {
+    return a + b;
+  });
+  var avg = sum / scoreLen;
+  
+  var chart = $('#score-chart').highcharts();
+  if (chart) {
+    chart.destroy();
+  }
+  
+  if (scoreData.length >= 5) {
+    $('#score-chart').show();
+    $('#score-chart').highcharts({
+      chart: {
+        type: 'boxplot'
+      },
+      
+      title: {
+        text: null
+      },
+      
+      legend: {
+        enabled: false
+      },
+
+      xAxis: {
+        title: {
+          text: null
+        }
+      },
+      
+      yAxis: {
+        title: {
+          text: 'Score'
+        },
+        min: 0,
+        plotLines: [{
+          value: avg,
+          color: '#f65e3b',
+          width: 2,
+          label: {
+            text: 'Average score: ' + Math.round(avg/1000) + 'k',
+            align: 'left',
+            style: {
+              color: '#776e65'
+            }
+          }
+        }]
+      },
+
+      series: [{
+        name: 'Score stats',
+        //pointWidth: '100',
+        pointPadding: 0,
+        //pointValKey: 'y',
+        groupPadding: 0.32,
+        data: [ scoreData ],
+        tooltip: {
+          headerFormat: ''
+        }
+      }],
+      
+      plotOptions: {
+        boxplot: {
+          fillColor: '#FFE8D5',
+        },
+      }
+    });
+  } else {
+    $('#score-chart').hide();
+  }
+}
+
+HTMLActuator.prototype.updateCharts = function (data, maxTile, score) {
+  maxTile = maxTile.toString();
+  
+  var maxTileChart = $('#max-tile-chart').highcharts();
+  var maxTileSeries = maxTileChart.series[0];
+  
+  // Update or add a point to the maxTileChart.
+  if (false && index >= 0) {
+    var point = maxTileSeries.data[index];
+    point.update(point.y + 1);
+  } else {
+    var logMaxTile = Math.round(Math.log(maxTile)/Math.log(2));
+    if (logMaxTile < maxTileSeries.xData[0]) {
+      startI = logMaxTile;
+      endI = maxTileSeries.xData[0];
+    } else {
+      endI = logMaxTile+1;
+      startI = maxTileSeries.xData[maxTileSeries.xData.length-1];
+    }
+    for (var i = startI; i < endI; i++) {
+      var y = (i == logMaxTile) ? 1 : 0;
+      var logI = Math.round(Math.log(i)/Math.log(2));
+      maxTileSeries.addPoint({name: (1 << i).toString(), x:i, y: y});
+    }
+  }
+  
+  // Add a point to the scoreChart.
+  data.score.push(score);
+  this.loadScoreChart(data.score);
+};
+

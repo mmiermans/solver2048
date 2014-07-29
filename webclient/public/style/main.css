@@ -499,6 +499,9 @@ hr {
   text-align: center;
   float: right; }
 
+.chart {
+  margin-top: 30px; }
+
 .game-explanation {
   margin-top: 50px; }
 
