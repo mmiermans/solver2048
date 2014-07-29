@@ -3,6 +3,7 @@ function HTMLActuator() {
   this.scoreContainer   = document.querySelector(".score-container");
   this.bestContainer    = document.querySelector(".best-container");
   this.messageContainer = document.querySelector(".game-message");
+  this.maxTileContainer = document.querySelector(".max-tile-chart");
 
   this.score = 0;
 }
@@ -136,4 +137,57 @@ HTMLActuator.prototype.clearMessage = function () {
   // IE only takes one value to remove at a time.
   this.messageContainer.classList.remove("game-won");
   this.messageContainer.classList.remove("game-over");
+};
+
+HTMLActuator.prototype.loadMaxTileChart = function (data) {
+  if (!data || data.length == 0) return;
+  
+  var minCat = 1<<16;
+  var maxCat = 2;
+  for (var i = 0; i < data.length; i++) {
+    minCat = Math.min(minCat, data[i][0]);
+    maxCat = Math.max(maxCat, data[i][0]);
+  }
+  
+  var categories = [];
+  var seriesData = [];
+  for (var i = minCat, j = 0; i <= maxCat; i *= 2) {
+    var name = i.toString();
+    categories.push(name);
+    var y = 0;
+    if (j < data.length && data[j][0] == i) {
+      y = data[j][1];
+      j++;
+    }
+    seriesData.push(y);
+  }
+  
+  $('#max-tile-chart').highcharts({
+    chart: {
+      type: 'column',
+      backgroundColor: '#faf8ef',
+    },
+    title: {
+      text: null,
+    },
+    legend: {
+      enabled: false,
+    },
+    xAxis: {
+      title: {
+        text: 'Maximum tile',
+      },
+      categories: categories,
+    },
+    yAxis: {
+      title: {
+        text: 'Games',
+      },
+      allowDecimals: false,
+    },
+    series: [{
+      name: 'Number of games',
+      data: seriesData,
+    }]
+  });
 };

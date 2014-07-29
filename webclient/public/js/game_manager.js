@@ -13,6 +13,8 @@ function GameManager(size, InputManager, Actuator, bootFeed) {
   this.lastRequestTime = Date.now();
   
   this.setup(bootFeed, true);
+  
+  this.actuator.loadMaxTileChart(bootFeed["stats"]);
 }
 
 // Continue to the next game
@@ -141,7 +143,6 @@ GameManager.prototype.requestMoves = function () {
       
       that.lastRequestTime = curTime;
     }
-    // TODO: handle other cases besides 4/200.
   };
 
   xmlhttp.open("GET", url, true);

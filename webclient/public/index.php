@@ -30,7 +30,7 @@
 
     <div class="game-container">
       <div class="game-message">
-		<p>Game over!</p>
+        <p>Game over!</p>
         <div class="lower">
           <a class="next-game-button">Next game</a>
         </div>
@@ -67,12 +67,21 @@
 
       </div>
     </div>
+    
+    <p class="game-explanation">
+      <h2>Performance statistics</h2>
+      <div id="max-tile-chart" style="width:100%; height:400px;"></div>
+    </p>
 
     <p class="game-explanation">
     <a href="https://github.com/mmiermans/solver2048">A.I.</a> created by <a href="http://miermans.com" target="_blank">Mathijs Miermans.</a>
     The game 2048 was made by <a href="http://gabrielecirulli.com" target="_blank">Gabriele Cirulli</a> and can played at <a href="http://git.io/2048">http://git.io/2048.</a>
     </p>
   </div>
+
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="js/highcharts/highcharts.js"></script>
+  <script src="js/highcharts/themes/theme2048.js"></script>
 
   <script src="js/bignumber.min.js"></script>
   <script src="js/bind_polyfill.js"></script>
@@ -84,9 +93,9 @@
   <script src="js/tile.js"></script>
   <script src="js/game_manager.js"></script>
   <script src="js/application.js"></script>
-  
+
   <script>
-    window.bootMoveFeed = <?php include 'bootmovefeed.php'; ?>;
+    window.bootMoveFeed = <?php include 'bootstrapped.php'; ?>;
   </script>
 </body>
 </html>

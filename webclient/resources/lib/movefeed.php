@@ -11,9 +11,38 @@ if (mysqli_connect_errno()) {
     exit();
 }
 
+// JSON structure
+$data = array(
+  "stats" => array(),
+  "game" => array(),
+  "moves" => array(),
+);
+
+// Fetch game statistics
+$statsQuery = <<<'EOD'
+SELECT max_tile, COUNT(*) AS count
+FROM games
+WHERE games.has_ended = 1
+GROUP BY max_tile
+EOD;
+if (isset($fetchGameStats) && $fetchGameStats) {
+  $result = $mysqli->query($statsQuery);
+  if (!$result) {
+    echo "CALL failed: (" . $mysqli->errno . ") " . $mysqli->error;
+  }
+  
+  while ($row = $result->fetch_row()) {
+    $x = array((int)$row[0], (int)$row[1]);
+    array_push($data["stats"], $x);
+  }
+
+  $result->close();
+}
+
+// Fetch move feed
 if (isset($move_count) && isset($game_id)) {
-	$move_count = (int)$move_count;
-	$game_id = (int)$game_id;
+  $move_count = (int)$move_count;
+  $game_id = (int)$game_id;
   $query = "CALL get_game_moves({$game_id}, {$move_count})";
 } else {
   $query = "CALL get_newest_game_moves()";
@@ -22,12 +51,6 @@ if (isset($move_count) && isset($game_id)) {
 if (!$mysqli->multi_query($query)) {
   echo "CALL failed: (" . $mysqli->errno . ") " . $mysqli->error;
 }
-
-// JSON structure
-$data = array(
-  "game" => array(),
-  "moves" => array(),
-);
 
 // Fetch results
 $resultNum = 0;
@@ -57,10 +80,8 @@ do {
     $resultNum++;
 
     $res->free();
-  } else {
-    if ($mysqli->errno) {
-      echo "store_result failed: (" . $mysqli->errno . ") " . $mysqli->error;
-    }
+  } else if ($mysqli->errno) {
+    echo "store_result failed: (" . $mysqli->errno . ") " . $mysqli->error;
   }
 } while ($mysqli->more_results() && $mysqli->next_result());
 
