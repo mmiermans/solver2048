@@ -3,7 +3,7 @@ CC    = g++
 
 MYSQLFLAGS   = -I/usr/include/mysql -DBIG_JOINS=1 -fno-strict-aliasing -DNDEBUG -L/usr/lib/x86_64-linux-gnu -lmysqlclient -lpthread -lz -lm -ldl
 DEFS         =
-CFLAGS       = -Wall -march=native
+CFLAGS       = -Wall -march=x86-64
 FLAGS        = $(DEFS) -msse4.1 $(CFLAGS)
 DEBUGFLAGS   = -O0 -g -D _DEBUG
 RELEASEFLAGS = -O3

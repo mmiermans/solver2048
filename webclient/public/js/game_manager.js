@@ -7,8 +7,7 @@ function GameManager(size, InputManager, Actuator, bootFeed) {
 
   this.inputManager.on("nextGame", this.nextGame.bind(this));
 
-  // TODO: set this to 15000 during production.
-  this.requestPeriod  = 5000;
+  this.requestPeriod  = 15000;
   this.isRequestInProgress = false;
   this.lastRequestTime = Date.now();
   
