@@ -8,6 +8,7 @@ function GameManager(size, InputManager, Actuator, bootFeed) {
   this.inputManager.on("nextGame", this.nextGame.bind(this));
 
   this.requestPeriod  = 15000;
+  this.maxMovePeriod = 2000;
   this.isRequestInProgress = false;
   this.lastRequestTime = Date.now();
   
@@ -197,13 +198,19 @@ GameManager.prototype.processMoveFeed = function () {
     this.executeMoveFromFeed();
     
     // Slowly change the movePeriod towards the movePeriodTarget.
-    var steps = Math.max(1, this.moveFeed.length / 10);
+    var steps;
+    if (this.movePeriod < this.movePeriodTarget) {
+      steps = this.moveFeed.length / 10;
+    } else {
+      steps = 10;
+    }
+    steps = Math.min(50, Math.max(1, steps));
     var change = this.movePeriodTarget - this.movePeriod;
     var newDelta = 0.5 * (change / steps) + 0.5 * this.movePeriodDelta;
     if (newDelta + this.movePeriod < 0)
       newDelta = -this.movePeriod;
-    else if (newDelta + this.movePeriod > this.requestPeriod)
-      newDelta = this.requestPeriod - this.movePeriod;
+    else if (newDelta + this.movePeriod > this.maxMovePeriod)
+      newDelta = this.maxMovePeriod - this.movePeriod;
     this.movePeriod += newDelta;
     this.movePeriodDelta = newDelta;
     
