@@ -46,30 +46,41 @@ Setup the server with the following steps:
   1. Test that your server works: [http://localhost](http://localhost) 
   2. Also install the native MySQL driver for PHP `sudo apt-get install php5-mysqlnd`
   3. Install phpMyAdmin (select **Apache2** during install): `sudo apt-get install phpmyadmin`
-5. Configure the database
+3. Configure the database
   1. Go to [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
   2. Import `solver2048/sql/solver2048.sql`
   3. Create a user (e.g. `solver2048_user`) with select, insert, update and **execute** privaleges to the database `solver2048`
-6. Adjust the database login info for PHP:
+4. Adjust the database login info for PHP:
   1. `cd ~/solver2048/webclient/resources`
   2. Create a config file: `cp config-sample.php config.php`
   3. Edit `config.php` to match the login data for your database
-7. Bring the webclient online:
+5. Bring the webclient online:
   1. Remove the example html directory: `sudo rm -r /var/www/html`
   2. Create symlink: `sudo ln -s ~/solver2048/webclient/public /var/www/html`
   3. Test this by visiting [http://localhost](http://localhost), where you should see an empty 2048 board
-7. Install the MySQL C development libraries: `sudo apt-get install libmysqlclient-dev`
-8. Build the game engine using the make command listed below, with the following adjustments:
+6. Install the MySQL C development libraries: `sudo apt-get install libmysqlclient-dev`
+7. Build the game engine using the make command listed below, with the following adjustments:
   1. Substitute username and password
   2. If necessary add `-DMYSQL_HOSTNAME="foo"`, `-DMYSQL_DATABASE="bar"` and/or `-DMYSQL_PORT=123` to `DEFS`. The defaults are "localhost", "solver2048" and 0, respectively.
   3. Optionally specify the `release` target for better performance
 
-```
-cd ~/solver2048/Solver2048
-make ENABLE_MYSQL=1 DEFS='-DMYSQL_USERNAME="solver2048_user" -DMYSQL_PASSWORD="abc123"'
-```
+  ```
+  cd ~/solver2048/Solver2048
+  make ENABLE_MYSQL=1 DEFS='-DMYSQL_USERNAME="solver2048_user" -DMYSQL_PASSWORD="abc123"'
+  ```
 
-
+8. Let Apache compress its output:
+  ```
+  <IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE image/svg+xml
+  </IfModule>
+  ```
 
 
 
