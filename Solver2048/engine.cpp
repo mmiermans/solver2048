@@ -64,6 +64,7 @@ Move::MoveEnum Engine::solve(Board board) {
 	// Based on the highest tile after the increasing sequence.
 	int maxBadTile = maxTileAfterSequence(board);
 	int baseLookAhead = (int)fmax(3, maxBadTile - 2);
+	int sequenceLen = BoardLogic::sequenceLen(board);
 
 	// Based on empty tiles after moves.
 	int maxEmptyTileCount = 0;
@@ -83,11 +84,6 @@ Move::MoveEnum Engine::solve(Board board) {
 		baseLookAhead = 1;
 	}
 
-	int tileSum = BoardLogic::sumTiles(board);
-	if (tileSum >= 30800) {
-		baseLookAhead = (int)fmax(6, baseLookAhead);
-	}
-
 	// Increase lookahead in case of locked rows.
 	Board selectedRows = MASK_ROW_FIRST;
 	for (int i = 2; i < BOARD_SIZE; i++) {
@@ -100,15 +96,21 @@ Move::MoveEnum Engine::solve(Board board) {
 		}
 	}
 
+	// Increase lookahead for game that is almost at 32768
+	if (BoardLogic::sequenceLen(board) >= 8)
+		baseLookAhead += 5;
+
 	// Maximum lookahead.
-	if ((board & 0xFFF) == 0xCBA ||
-		(board & 0xFFF) == 0xDCB ||
-		(board & 0xFFF) == 0xEDC) {
+	int firstTile = (1 << BoardLogic::getTile(board, 0, 0)) & ~1;
+	if (firstTile >= 16384 && sequenceLen >= 3) {
 		// A good board deserves a good look ahead.
 		baseLookAhead = (int)fmin(10, baseLookAhead);
+	} else if (firstTile >= 8192 && sequenceLen >= 3) {
+		// A good board deserves a good look ahead.
+		baseLookAhead = (int)fmin(8, baseLookAhead);
 	} else {
 		// This board is not good, restrict the look ahead.
-		baseLookAhead = (int)fmin(8, baseLookAhead);
+		baseLookAhead = (int)fmin(6, baseLookAhead);
 	}
 
 	// Bind lookahead to valid range
@@ -117,7 +119,6 @@ Move::MoveEnum Engine::solve(Board board) {
 	} else if (baseLookAhead < 1) {
 		baseLookAhead = 1;
 	}
-	//std::cout << baseLookAhead << std::endl;
 
 	unsigned char validMoves = BoardLogic::getValidMoves(board);
 	bool isSingleMove = false;
@@ -133,12 +134,6 @@ Move::MoveEnum Engine::solve(Board board) {
 		for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
 			Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
 			if ((validMoves & move) != 0) {
-				if (move == Move::Down) {
-					dfsLookAhead = fmin(5, baseLookAhead);
-				} else {
-					dfsLookAhead = baseLookAhead;
-				}
-
 				Board movedBoard = BoardLogic::performMove(board, move);
 				float score = depthFirstSolve(0, movedBoard);
 				if (bestScore > score) {
