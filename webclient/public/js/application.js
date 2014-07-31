@@ -1,7 +1,9 @@
 // Wait till the browser is ready to render the game (avoids glitches)
-window.requestAnimationFrame(function () {
-  new GameManager(4, KeyboardInputManager, HTMLActuator, window.bootMoveFeed);
-});
+window.startApplication = function() {
+  window.requestAnimationFrame(function () {
+    new GameManager(4, KeyboardInputManager, HTMLActuator, window.bootMoveFeed);
+  });
+};
 
 window.encodeQueryData = function (data) {
    var ret = [];
