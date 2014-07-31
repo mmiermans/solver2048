@@ -131,7 +131,9 @@ void precomputeMoves() {
 
 int main(int argc, char* argv[]) {
 	BitMath::sanityCheck();
+#ifdef ENABLE_MYSQL
 	MySqlConnector mySqlConnector;
+#endif
 
 	Engine e;
 
@@ -242,7 +244,9 @@ int main(int argc, char* argv[]) {
 #endif
 		}
 
+#ifdef ENABLE_MYSQL
 		mySqlConnector.flush();
+#endif
 
 		cout << "GAME OVER." << endl << endl;
 		cout << "RESTARTING..." << endl << endl;
