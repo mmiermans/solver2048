@@ -123,7 +123,7 @@ GameManager.prototype.requestMoves = function () {
       
       // Only accept games larger than requestMinGame.
       if (!that.requestMinGame || parsed.game.id >= that.requestMinGame) {
-        this.requestMinGame = 0;
+        that.requestMinGame = 0;
         that.gameInfo = parsed.game;
         var newMoves = parsed.moves;
         var curTime = Date.now();
@@ -418,7 +418,9 @@ GameManager.prototype.tileMatchesAvailable = function () {
 GameManager.prototype.getMaxTile = function() {
   var maxTile = 0;
   this.grid.eachCell(function (x, y, tile) {
-    maxTile = Math.max(maxTile, tile);
+    if (tile && tile.value > maxTile) {
+      maxTile = tile.value;
+    }
   });
   return maxTile;
 }

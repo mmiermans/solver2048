@@ -299,11 +299,12 @@ HTMLActuator.prototype.updateCharts = function (data, maxTile, score) {
   var maxTileSeries = maxTileChart.series[0];
   
   // Update or add a point to the maxTileChart.
+  var logMaxTile = Math.round(Math.log(maxTile)/Math.log(2));
+  var index = maxTileSeries.processedXData.indexOf(logMaxTile);
   if (index >= 0) {
     var point = maxTileSeries.data[index];
     point.update(point.y + 1);
   } else {
-    var logMaxTile = Math.round(Math.log(maxTile)/Math.log(2));
     if (logMaxTile < maxTileSeries.xData[0]) {
       startI = logMaxTile;
       endI = maxTileSeries.xData[0];
