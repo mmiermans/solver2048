@@ -28,7 +28,7 @@ public:
 	MySqlConnector();
 	virtual ~MySqlConnector();
 
-	void startGame(Board& board, int& moveCount);
+	void startGame(Board& board, int& moveCount, int& score);
 
 	void insertMove(
 			Board before,

@@ -81,13 +81,16 @@ void MySqlConnector::throwMySqlException() {
 	throw std::runtime_error(error);
 }
 
-void MySqlConnector::startGame(Board& board, int& moveCount) {
+void MySqlConnector::startGame(Board& board, int& moveCount, int& score) {
 	MYSQL_RES* result;
 	MYSQL_ROW row;
 	mysql_set_server_option(con, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
 
-	if (mysql_query(con,
-			"SELECT id,board,move_count FROM games WHERE has_ended=0")) {
+	const char* selectGameQuery =
+		"SELECT id, board, move_count, score"
+		" FROM games"
+		" WHERE has_ended=0";
+	if (mysql_query(con, selectGameQuery)) {
 		throwMySqlException();
 	}
 
@@ -102,6 +105,7 @@ void MySqlConnector::startGame(Board& board, int& moveCount) {
 		gameId = Convert<int>::fromString(row[0]);
 		board = Convert<Board>::fromString(row[1]);
 		moveCount = Convert<int>::fromString(row[2]);
+		score = Convert<int>::fromString(row[3]);
 	} else {
 		// Start a new game.
 		if (mysql_query(con,

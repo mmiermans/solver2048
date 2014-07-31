@@ -347,20 +347,32 @@ Board BoardLogic::hasEmptyTile(Board b) {
 	return (b - MASK_TILES_LSB) & (~b) & MASK_TILES_MSB;
 }
 
-int BoardLogic::calculateScore(Board b, int moveCount) {
-	int score = 0;
-	int tileSum = 0;
-	while (b) {
-		Tile t = (b & TILE_MASK);
-		if (t > 0) {
-			score += (t - 1) * (1 << t);
-			tileSum += t;
-		}
-		b >>= TILE_BITS;
+int BoardLogic::calculateScoreIncrease(Board before, Board after) {
+	int tileCount[TILE_MAX];
+
+	for (int i = 0; i < TILE_MAX; ++i) {
+		tileCount[i] = 0;
 	}
 
-	// Correct for 4-tiles that were inserted.
-	int loss = 2 * (tileSum - (2 * moveCount) - 4);
+	// Count tiles on board after.
+	while (after) {
+		tileCount[after & TILE_MASK]++;
+		after >>= TILE_BITS;
+	}
 
-	return score - loss;
+	// Subtract tiles on board before.
+	while (before) {
+		tileCount[before & TILE_MASK]--;
+		before >>= TILE_BITS;
+	}
+
+	// Sum new tiles
+	int scoreDelta = 0;
+	for (int i = 2; i < TILE_MAX; ++i) {
+		if (tileCount[i] > 0) {
+			scoreDelta += 1 << i;
+		}
+	}
+
+	return scoreDelta;
 }

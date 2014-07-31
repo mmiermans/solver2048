@@ -139,9 +139,10 @@ int main(int argc, char* argv[]) {
 	while (true) {
 		Board b = 0;
 		int moveCount = 0;
+		int score = 0;
 
 #ifdef ENABLE_MYSQL
-		mySqlConnector.startGame(b, moveCount);
+		mySqlConnector.startGame(b, moveCount, score);
 #endif
 		int startMoveCount = moveCount;
 
@@ -167,28 +168,29 @@ int main(int argc, char* argv[]) {
 			Move::MoveEnum bestMove = e.solve(b);
 
 			// Execute move.
-			Board boardBefore = b;
+			Board boardBeforeMove = b;
 			moveCount++;
 
 			b = BoardLogic::performMove(b, bestMove);
+			Board boardAfterMove = b;
 
 			// Insert new random tile.
 			int newTilePosition = 0;
 			Tile newTileValue = 0;
 			e.getRandomTile(b, newTilePosition, newTileValue);
 			BoardLogic::setTile(b, newTilePosition, newTileValue);
-			assert(boardBefore != b);
 
 			// Gameover?
 			hasValidMove = (BoardLogic::getValidMoves(b) != (Move::MoveEnum) 0);
 
-			int score = BoardLogic::calculateScore(b, moveCount);
+			int scoreIncrease = BoardLogic::calculateScoreIncrease(boardBeforeMove, boardAfterMove);
+			score += scoreIncrease;
 
 #ifdef ENABLE_MYSQL
 			int maxTile = BoardLogic::maxTile(b);
 			// Add move to MySQL database
 			mySqlConnector.insertMove(
-					boardBefore,
+					boardBeforeMove,
 					b,
 					bestMove,
 					newTilePosition / TILE_BITS,
