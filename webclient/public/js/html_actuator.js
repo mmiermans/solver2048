@@ -178,7 +178,7 @@ HTMLActuator.prototype.loadCharts = function (data) {
     xAxis: {
       type: 'category',
       title: {
-        text: 'Maximum tile',
+        text: 'Highest tile',
       },
     },
     yAxis: {
@@ -204,7 +204,17 @@ HTMLActuator.prototype.loadScoreChart = function (scoreData) {
     return a + b;
   });
   var avg = sum / scoreLen;
-  
+
+  // Calculate quartiles
+  var qData = [];
+  for (var i = 0; i <= 4; i++) {
+    var j = (i/4) * (scoreLen - 1);
+    var l = Math.floor(j);
+    var h = Math.ceil(j);
+    var val = Math.round(((1+l-j) * scoreData[l]) + ((j-l) * scoreData[h]));
+    qData.push(val);
+  }
+ 
   var chart = $('#score-chart').highcharts();
   if (chart) {
     chart.destroy();
@@ -226,22 +236,31 @@ HTMLActuator.prototype.loadScoreChart = function (scoreData) {
       },
 
       xAxis: {
+        lineWidth: 0,
+        minorGridLineWidth: 0,
+        lineColor: 'transparent',
+        minorTickLength: 0,
+        tickLength: 0,
         title: {
-          text: null
-        }
+          text: 'Score box plot'
+        },
+        labels: {
+          enabled: false
+        },
       },
       
       yAxis: {
         title: {
           text: 'Score'
         },
-        min: 0,
+        gridLineWidth: 1,
+        gridLineColor: '#A59D94',
         plotLines: [{
           value: avg,
           color: '#f65e3b',
           width: 2,
           label: {
-            text: 'Average score: ' + Math.round(avg/1000) + 'k',
+            text: 'Average: ' + Math.round(avg/1000) + 'k',
             align: 'left',
             style: {
               color: '#776e65'
@@ -256,7 +275,7 @@ HTMLActuator.prototype.loadScoreChart = function (scoreData) {
         pointPadding: 0,
         //pointValKey: 'y',
         groupPadding: 0.32,
-        data: [ scoreData ],
+        data: [ qData ],
         tooltip: {
           headerFormat: ''
         }
@@ -280,7 +299,7 @@ HTMLActuator.prototype.updateCharts = function (data, maxTile, score) {
   var maxTileSeries = maxTileChart.series[0];
   
   // Update or add a point to the maxTileChart.
-  if (false && index >= 0) {
+  if (index >= 0) {
     var point = maxTileSeries.data[index];
     point.update(point.y + 1);
   } else {
