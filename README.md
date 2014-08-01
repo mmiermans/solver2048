@@ -1,6 +1,8 @@
 solver2048
 ==========
 
+See it in action: [http://32768.eu](http://32768.eu)
+
 ## Building the game engine
 
 TL;DR: `git clone https://github.com/mmiermans/solver2048.git && cd solver2048/Solver2048 && make && ./Debug/Solver2048`
