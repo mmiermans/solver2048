@@ -1,13 +1,13 @@
 solver2048
 ==========
 
-See it in action: [http://32768.eu](http://32768.eu)
+### Watch a live stream of the A.I. in action: [http://32768.eu](http://32768.eu)
 
 ## Building the game engine
 
 TL;DR: `git clone https://github.com/mmiermans/solver2048.git && cd solver2048/Solver2048 && make && ./Debug/Solver2048`
 
-That was the short version! What follows are more detailed instructions for building the engine on Windows or Linux. A 64-bit system is required in both cases. The Linux instructions are targeted towards Ubuntu -- because that's what I use -- so subtitute apt-get with your favorite package manager if you use something else.
+That was the short version! What follows are more detailed instructions for building the engine on Windows or Linux. A 64-bit system is required in both cases. The Linux instructions are targeted towards Ubuntu -- because that's what I use -- so substitute apt-get with your favorite package manager if you use something else.
 
 ### Windows 64-bit
 
@@ -51,7 +51,7 @@ Setup the server with the following steps:
 3. Configure the database
   1. Go to [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
   2. Import `solver2048/sql/solver2048.sql`
-  3. Create a user (e.g. `solver2048_user`) with select, insert, update and **execute** privaleges to the database `solver2048`
+  3. Create a user (e.g. `solver2048_user`) with select, insert, update and **execute** privilege to the database `solver2048`
 4. Adjust the database login info for PHP:
   1. `cd ~/solver2048/webclient/resources`
   2. Create a config file: `cp config-sample.php config.php`
