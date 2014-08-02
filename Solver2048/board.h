@@ -37,11 +37,17 @@ public:
 
 	static inline int sumTiles(Board b) { int score = 0; while (b) { score += (~1) & (1 << (b & TILE_MASK)); b >>= TILE_BITS; } return score; }
 
-	static inline int sequenceLen(Board b) { int l = 0; Tile t = b & TILE_MASK; while (t > 0 && t == (b & TILE_MASK)) { l++; t--; b >>= TILE_BITS; } return l; }
-
 	static int calculateScoreIncrease(Board before, Board after);
 
 	static inline int maxTile(Board b) { Tile m = 0; while (b) { Tile t = b & TILE_MASK; if (t > m) m = t; b >>= TILE_BITS; } return (int)((1 << m) & (~1)); }
+
+	static inline Board flipOddRows(Board b) {
+		return (b & 0x0000FFFF0000FFFF) |
+			((b & 0x000F0000000F0000) << 12) |
+			((b & 0x00F0000000F00000) << 4) |
+			((b & 0x0F0000000F000000) >> 4) |
+			((b & 0xF0000000F0000000) >> 12);
+	}
 
 	/// <summary>
 	/// Calculates a board that indicates which tiles are empty

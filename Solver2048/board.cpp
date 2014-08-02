@@ -10,18 +10,13 @@ using namespace std;
 void BoardLogic::printBoard(Board board) {
 	ios::fmtflags f(cout.flags());
 
-	char filler = '#';
+	char filler = '|';
 	int tileWidth = 7;
 
-	string outerBorder = string(tileWidth * BOARD_SIZE + 1, filler) + '\n';
-	string innerBorder = string(1, filler);
-	for (int i = 0; i < BOARD_SIZE; i++)
-		innerBorder += string(tileWidth - 1, ' ') + filler;
-	innerBorder += '\n';
+	const char* outerBorder = "+------+------+------+------+\n";
 
 	for (int y = 0; y < BOARD_SIZE; y++) {
 		cout << outerBorder;
-		cout << innerBorder;
 		cout << filler;
 		for (int x = 0; x < BOARD_SIZE; x++) {
 			cout.width(tileWidth - 2);
@@ -34,10 +29,9 @@ void BoardLogic::printBoard(Board board) {
 			cout << ' ' << filler;
 		}
 		cout << endl;
-		cout << innerBorder;
 	}
 
-	cout << "########## 0x";
+	cout << "+------+-- 0x";
 	cout << hex << setfill('0') << setw(16) << board << endl;
 
 	// Restore cout state
@@ -348,7 +342,7 @@ Board BoardLogic::hasEmptyTile(Board b) {
 }
 
 int BoardLogic::calculateScoreIncrease(Board before, Board after) {
-	int tileCount[TILE_MAX];
+	int tileCount[TILE_MAX+1];
 
 	for (int i = 0; i < TILE_MAX; ++i) {
 		tileCount[i] = 0;

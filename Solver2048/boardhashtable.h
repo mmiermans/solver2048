@@ -8,7 +8,9 @@
 class BoardHashTable
 {
 public:
-	static const int size = 16760761;
+	static const int sizePower = 27; // 27 = 512 MB
+	static const int sizeMask = (1<<sizePower) - 1;
+	static const int size = 1<<sizePower;
 	const float nullValue = FLT_MAX;
 
 	BoardHashTable() { table = new float[size]; clear(); }
@@ -34,18 +36,19 @@ public:
 		table[size - 1] = nullValue;
 	}
 
-	inline float get(Board b) {
-		int i = hash(b) % size;
-		return table[i];
+	inline float getValue(uint64_t index) {
+		return table[index];
 	}
 
-	inline void put(Board b, float v) {
-		int i = hash(b) % size;
-		table[i] = v;
+	inline void putValue(uint64_t index, float v) {
+		table[index] = v;
 	}
 
-	static inline Board hash(Board h) {
-		return __ac_Wang_hash(h);
+	static inline uint64_t getIndex(Board h) {
+		h = mix_fasthash(__ac_Wang_hash(h));
+		h ^= (h >> sizePower);
+		h ^= (h >> (64 - sizePower));
+		return h & sizeMask;
 	}
 
 private:

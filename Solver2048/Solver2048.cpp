@@ -29,89 +29,6 @@ void askTile(Board& board) {
 	BoardLogic::setTile(board, x, y, tile);
 }
 
-void playSimpleStrategy() {
-	Board b;
-	Engine e;
-
-	for (int i = 0; i < 5; i++) {
-		clock_t startTime = clock();
-
-		uint64_t attempts = 0;
-		uint64_t moveCount = 0;
-		SearchNode* sn = new SearchNode();
-
-		while (startTime + (3 * CLOCKS_PER_SEC) > clock()) {
-
-			for (int j = 0; j < 1000; j++) {
-				bool hasPossibleMove = true;
-				BoardLogic::clearBoard(b);
-
-				while (hasPossibleMove) {
-					e.setRandomTile(b);
-
-					// Do move
-					char moves = BoardLogic::getValidMoves(b);
-					if (moves & Move::Up) {
-						b = BoardLogic::performMove(b, Move::Up);
-					} else {
-						Move::MoveEnum moveA = Move::Left;
-						Move::MoveEnum moveB = Move::Right;
-						Tile firstRowLastTile = (b >> (3 * TILE_BITS))
-								& TILE_MASK;
-						if (firstRowLastTile >= 1) {
-							if (((firstRowLastTile * MASK_ROW_LSB) + 0x0123)
-									== (b & MASK_ROW_FIRST)) {
-								moveA = Move::Right;
-								moveB = Move::Left;
-							}
-						}
-
-						if (moves & moveA) {
-							b = BoardLogic::performMove(b, moveA);
-						} else if (moves & moveB) {
-							b = BoardLogic::performMove(b, moveB);
-						} else if (moves & Move::Down) {
-							b = BoardLogic::performMove(b, Move::Down);
-						} else {
-							// Game over!
-							hasPossibleMove = false;
-						}
-					}
-
-					moveCount++;
-				}
-
-				attempts++;
-			}
-		}
-
-		clock_t endTime = clock();
-		cout << (CLOCKS_PER_SEC * moveCount) / (endTime - startTime)
-				<< " moves/s" << endl;
-
-		delete sn;
-	}
-}
-
-void printChildBoards(SearchNode& sn) {
-	for (int i = 0; i < 4; i++) {
-		for (int v = 0; v < 2; v++) {
-			for (int j = 0; j < sn.childCount[i][v]; j++) {
-				ChildNode& childNode = sn.children[i][j][v];
-				Board childBoard = childNode.board;
-				cout << "Value: " << (1 << (v + 1)) << "\tPositions: "
-						<< (int) childNode.positions[0];
-				for (int k = 1; k < 4 && childNode.positions[k] > 0; k++) {
-					cout << ", " << (int) childNode.positions[k];
-				}
-				const char* moveNames[4] = { "Up", "Right", "Down", "Left" };
-				cout << "\tMove: " << moveNames[i] << endl;
-				BoardLogic::printBoard(childBoard);
-			}
-		}
-	}
-}
-
 void precomputeMoves() {
 	for (int i = 0; i < 1 << 16; i++) {
 		Board iBoard = (Board) i;
@@ -135,10 +52,9 @@ int main(int argc, char* argv[]) {
 	MySqlConnector mySqlConnector;
 #endif
 
-	Engine e;
-
 	// RESTART GAME LOOP
 	while (true) {
+		Engine e;
 		Board b = 0;
 		int moveCount = 0;
 		int score = 0;
@@ -159,20 +75,61 @@ int main(int argc, char* argv[]) {
 		int lastCost = 0;
 		clock_t startTime = clock();
 		clock_t lastPrintTime = startTime;
-		int printStep = CLOCKS_PER_SEC;
+		const int printStep = CLOCKS_PER_SEC;
 		int maxLookAhead = 0;
 		clock_t currentTime;
 
 		// Main game loop
 		bool hasValidMove = true;
 		while (hasValidMove) {
+
 			// Let game engine perform evaluation on board b.
 			Move::MoveEnum bestMove = e.solve(b);
 
-			// Execute move.
 			Board boardBeforeMove = b;
 			moveCount++;
 
+#ifdef ENABLE_STDOUT
+			// Debug info
+			if (e.dfsLookAhead > maxLookAhead)
+				maxLookAhead = e.dfsLookAhead;
+			int cost = e.evaluateBoard(b);
+			currentTime = clock();
+			if (cost - lastCost > 1024 ||
+				hasValidMove == false ||
+				moveCount == 1 ||
+				currentTime - lastPrintTime >= printStep) {
+				// Game statistics
+				cout << "Moves: " << moveCount << "\t";
+				cout << "Time: " << (currentTime - startTime) / CLOCKS_PER_SEC
+					<< "s\t";
+				cout << "Score: " << score;
+				cout << endl;
+				
+				// Speed stats
+				cout << "Moves/s: "
+					<< (CLOCKS_PER_SEC * (moveCount - lastMoveCount))
+					/ (float)(currentTime - lastPrintTime) << "\t";
+				cout << "AvgMoves/s: "
+					<< (CLOCKS_PER_SEC * (moveCount - startMoveCount))
+					/ (float)(currentTime - startTime) << "\t";
+				lastMoveCount = moveCount;
+				int kNodesPerSec =
+					e.cpuTime == 0 ?
+					9999 :
+					(int)((CLOCKS_PER_SEC * e.nodeCounter)
+					/ (1000 * e.cpuTime));
+				cout << "kNodes/s: " << kNodesPerSec << "\t";
+				cout << endl;
+
+				BoardLogic::printBoard(b);
+				cout << endl;
+				lastPrintTime = currentTime;
+				lastCost = cost;
+			}
+#endif
+
+			// Execute move.
 			b = BoardLogic::performMove(b, bestMove);
 			Board boardAfterMove = b;
 
@@ -201,57 +158,15 @@ int main(int argc, char* argv[]) {
 					maxTile,
 					!hasValidMove);
 #endif
-
-#ifdef ENABLE_STDOUT
-			// Debug info
-			if (e.dfsLookAhead > maxLookAhead)
-				maxLookAhead = e.dfsLookAhead;
-			int cost = e.evaluateBoard(b);
-			currentTime = clock();
-			if (cost - lastCost > 1024 ||
-				hasValidMove == false ||
-				moveCount == 1 ||
-				currentTime - lastPrintTime >= printStep) {
-				// Game statistics
-				cout << "Moves: " << moveCount << "\t";
-				cout << "Time: " << (currentTime - startTime) / CLOCKS_PER_SEC
-						<< "s\t";
-				cout << "Score: " << score << "\t";
-				cout << "BoardCost: " << cost;
-				cout << endl;
-
-				// Engine performance statistics
-				cout << "LookAhead: " << maxLookAhead << "\t";
-				maxLookAhead = 0;
-				cout << "Moves/s: "
-						<< (CLOCKS_PER_SEC * (moveCount - lastMoveCount))
-								/ (float) (currentTime - lastPrintTime) << "\t";
-				cout << "AvgMoves/s: "
-						<< (CLOCKS_PER_SEC * (moveCount - startMoveCount))
-								/ (float) (currentTime - startTime) << "\t";
-				lastMoveCount = moveCount;
-				int kNodesPerSec =
-						e.cpuTime == 0 ?
-								9999 :
-								(int) ((CLOCKS_PER_SEC * e.nodeCounter)
-										/ (1000 * e.cpuTime));
-				cout << "kNodes/s: " << kNodesPerSec << "\t";
-				cout << endl;
-
-				BoardLogic::printBoard(b);
-				cout << endl;
-				lastPrintTime = currentTime;
-				lastCost = cost;
-			}
-#endif
 		}
 
 #ifdef ENABLE_MYSQL
 		mySqlConnector.flush();
 #endif
-
-		cout << "GAME OVER." << endl << endl;
-		cout << "RESTARTING..." << endl << endl;
+#ifdef ENABLE_STDOUT
+		cout << endl << "GAME OVER." << endl;
+		cout << "********************************************************************************" << endl << endl;
+#endif
 	}
 
 	return 0;

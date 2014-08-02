@@ -1,15 +1,12 @@
 #pragma once
 
-#define ENABLE_HASHING
 #define CUSTOM_HASHING
+//#define GOOGLE_HASHING_DENSE
+//#define GOOGLE_HASHING_SPARSE
 
-#ifdef ENABLE_HASHING
-#ifndef CUSTOM_HASHING
+#if defined(GOOGLE_HASHING_SPARSE) || defined(GOOGLE_HASHING_DENSE)
 #define GOOGLE_HASHING
 #endif
-#endif
-
-//#define ENABLE_SAMPLING
 
 #include <time.h>
 
@@ -25,9 +22,13 @@
 #ifdef CUSTOM_HASHING
 #include "boardhashtable.h"
 #else
-#include <sparsehash/internal/sparseconfig.h>
+#ifdef GOOGLE_HASHING_SPARSE
+#include <sparsehash/sparse_hash_map>
+typedef google::sparse_hash_map<Board, float> hash_t;
+#else
 #include <sparsehash/dense_hash_map>
 typedef google::dense_hash_map<Board, float> hash_t;
+#endif
 #endif
 
 class Engine
@@ -55,12 +56,12 @@ public:
 	uint64_t nodeCounter;
 	clock_t cpuTime;
 	int moveCounter[4];
+	float costEst;
 
 	int dfsLookAhead;
+	int lastLookAhead;
 
 private:
-	std::map< Board, std::vector<Board> > reverseHashTable;
-
 	fastrand* fastRng;
 	SearchNode* nodes;
 
@@ -69,9 +70,17 @@ private:
 #else
 	hash_t scoreMap;
 #endif
+	
+	void clearHash();
+
+	void Engine::evaluateMoves(const unsigned char moves, Board b, float& bestCost, int& bestMoveIndex);
 
 	float depthFirstSolve(int index, Board b);
 
 	int maxTileAfterSequence(Board b);
+
+	int sequenceLength(Board b);
+
+	int getMoveIndex(Move::MoveEnum move);
 };
 

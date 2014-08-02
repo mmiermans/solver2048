@@ -28,8 +28,8 @@ void SearchNode::generateChildren(Board b) {
 	//  belong to a sequence and the length of the sequence (emptyCounts).
 	// First loop through horizontal (d=0) and vertical (d=1) dimensions.
 	for (int d = 0; d < 2; d++) {
-		int posStep;
-		int posStepI;
+		int8_t posStep;
+		int8_t posStepI;
 		if (d == 0) {
 			posStep = 1;
 			posStepI = BOARD_SIZE;
@@ -39,17 +39,17 @@ void SearchNode::generateChildren(Board b) {
 		}
 
 		// Loop through primary coordinate.
-		for (int i = 0; i < BOARD_SIZE; i++) {
+		for (int8_t i = 0; i < BOARD_SIZE; i++) {
 			int sequenceCount = 0;
 			unsigned char* emptyCount;
 			int8_t* position;
 			bool isNewSequence = true;
 
 			// Loop through secondary coordinate.
-			int posStart = i * posStepI;
-			int posEnd = posStart + BOARD_SIZE*posStep;
+			int8_t posStart = i * posStepI;
+			int8_t posEnd = posStart + BOARD_SIZE*posStep;
 			int seqIndex;
-			for (int pos = posStart; pos < posEnd; pos += posStep) {
+			for (int8_t pos = posStart; pos < posEnd; pos += posStep) {
 				// Test whether the board is empty at pos.
 				if ((emptyMask & (TILE_MASK << (pos * TILE_BITS))) != 0) {
 					if (isNewSequence) {

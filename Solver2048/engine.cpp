@@ -9,8 +9,11 @@
 #include "engine.h"
 #include "searchnode.h"
 
-#define MAX_LOOK_AHEAD 11
-#define MAX_SCORE (FLT_MAX)
+using namespace std;
+
+#define MAX_LOOK_AHEAD 16
+#define MAX_COST (FLT_MAX)
+#define GAMEOVER_COST (1<<14);
 
 Engine::Engine()
 #ifdef GOOGLE_HASHING
@@ -21,11 +24,13 @@ Engine::Engine()
 	hashMisses = 0;
 	nodeCounter = 0;
 	cpuTime = 0;
+	lastLookAhead = 0;
+	costEst = 0;
 
 	fastRng = new fastrand;
 	BitMath::initRng(fastRng);
 
-#ifdef GOOGLE_HASHING
+#ifdef GOOGLE_HASHING_DENSE
 	scoreMap.set_empty_key(-1);
 #endif
 
@@ -44,27 +49,33 @@ Engine::~Engine()
 	delete[] nodes;
 }
 
-Move::MoveEnum Engine::solve(Board board) {
-	clock_t startTime = clock();
-
-#ifdef ENABLE_HASHING
-#ifdef CUSTOM_HASHING
+void Engine::clearHash() {
+#if defined(CUSTOM_HASHING)
 	boardHashTable.clear();
-#else
+#elif defined(GOOGLE_HASHING_SPARSE)
+	scoreMap.clear();
+#elif defined(GOOGLE_HASHING_DENSE)
 	scoreMap.clear_no_resize();
 #endif
-//	reverseHashTable.clear();
-#endif
+}
+
+Move::MoveEnum Engine::solve(Board board) {
+	clock_t startTime = clock();
+	clock_t endTime;
+	unsigned char validMoves = BoardLogic::getValidMoves(board);
+	int bestMoveIndex = 0;
+	float bestCost = 0;
+
 	hashHits = 0;
 	hashMisses = 0;
 
-	float bestScore = MAX_SCORE;
-	int bestMoveIndex = 0;
-
-	// Based on the highest tile after the increasing sequence.
 	int maxBadTile = maxTileAfterSequence(board);
-	int baseLookAhead = (int)fmax(3, maxBadTile - 2);
-	int sequenceLen = BoardLogic::sequenceLen(board);
+	int sequenceLen = sequenceLength(board);
+	Tile firstTile = (1 << BoardLogic::getTile(board, 0, 0)) & ~1;
+
+	double freeFactor = (float)(BOARD_SIZE_SQ - sequenceLen) / (float)BOARD_SIZE_SQ;
+	double boundedMaxTile = fmin(7, maxBadTile);
+	double baseLookAhead = 2 + (double)boundedMaxTile / (3 * freeFactor + 0.1);
 
 	// Based on empty tiles after moves.
 	int maxEmptyTileCount = 0;
@@ -76,196 +87,169 @@ Move::MoveEnum Engine::solve(Board board) {
 			maxEmptyTileCount = emptyTileCount;
 		}
 	}
-	if (maxEmptyTileCount <= 2 && BoardLogic::getTile(board, 0, 0) >= 13) {
-		baseLookAhead = (int)fmax(baseLookAhead, 11 - maxEmptyTileCount);
+	if (maxEmptyTileCount <= 2 && firstTile >= 4096) {
+		baseLookAhead += 3;
+	} else if (maxEmptyTileCount <= 3) {
+		baseLookAhead += 1;
+	} else if (maxEmptyTileCount <= 2) {
+		baseLookAhead += 2;
+	} else if (maxEmptyTileCount <= 1) {
+		baseLookAhead += 3;
 	}
 
-	if (BoardLogic::getTile(board, 0, 0) == 0) {
-		baseLookAhead = 1;
-	}
-
-	// Increase lookahead in case of locked rows.
-	Board selectedRows = MASK_ROW_FIRST;
-	for (int i = 2; i < BOARD_SIZE; i++) {
-		selectedRows <<= ROW_BITS;
-		selectedRows |= ROW_MASK;
-		unsigned char moves = BoardLogic::getValidMoves(board & selectedRows);
-		bool hasEmptyTiles = (BoardLogic::hasEmptyTile(board | ~selectedRows) != 0);
-		if ((moves & ~Move::Down) == 0 && hasEmptyTiles == false) {
-			baseLookAhead += 2;
+	// Clamp lookahead depending on sequence length and first tile.
+	float preliminaryEval = MAX_COST;
+	if (firstTile >= 8192) {
+		if (this->lastLookAhead > 4) {
+			preliminaryEval = costEst;
+		} else {
+			this->dfsLookAhead = 4;
+			evaluateMoves(validMoves, board, preliminaryEval, bestMoveIndex);
 		}
-	}
 
-	// Increase lookahead for game that is almost at 32768
-	if (BoardLogic::sequenceLen(board) >= 8)
-		baseLookAhead += 5;
-
-	// Maximum lookahead.
-	int firstTile = (1 << BoardLogic::getTile(board, 0, 0)) & ~1;
-	if (firstTile >= 16384 && sequenceLen >= 3) {
-		// A good board deserves a good look ahead.
-		baseLookAhead = (int)fmin(10, baseLookAhead);
-	} else if (firstTile >= 8192 && sequenceLen >= 3) {
-		// A good board deserves a good look ahead.
-		baseLookAhead = (int)fmin(8, baseLookAhead);
+		if (firstTile >= 16384 && preliminaryEval > 1000 && maxEmptyTileCount <= 3) {
+			if (sequenceLen >= 10) {
+				baseLookAhead = 13;
+			} else if (sequenceLen >= 7) {
+				baseLookAhead = 12;
+			} else {
+				baseLookAhead = 11;
+			}
+		} else if (preliminaryEval > 500 && maxEmptyTileCount <= 3) {
+			baseLookAhead++;
+			baseLookAhead = fmax(10, baseLookAhead);
+			baseLookAhead = fmin(11, baseLookAhead);
+		} else if (preliminaryEval > 100) {
+			baseLookAhead = fmax(9, baseLookAhead);
+			baseLookAhead = fmin(11, baseLookAhead);
+		} else {
+			baseLookAhead = fmax(6, baseLookAhead);
+			baseLookAhead = fmin(10, baseLookAhead);
+		}
 	} else {
 		// This board is not good, restrict the look ahead.
-		baseLookAhead = (int)fmin(6, baseLookAhead);
+		baseLookAhead = fmax(4, baseLookAhead);
+		baseLookAhead = fmin(6, baseLookAhead);
+	}
+	this->dfsLookAhead = (int)baseLookAhead;
+
+	// Determine whether multiple moves are possible.
+	if (BitMath::popCount(validMoves) == 1) {
+		bestMoveIndex = getMoveIndex((Move::MoveEnum)validMoves);
+		this->dfsLookAhead = 0;
 	}
 
-	// Bind lookahead to valid range
-	if (baseLookAhead > MAX_LOOK_AHEAD - 1) {
-		baseLookAhead = MAX_LOOK_AHEAD - 1;
-	} else if (baseLookAhead < 1) {
-		baseLookAhead = 1;
+#ifdef ENABLE_STDOUT
+	// Engine performance statistics
+	cout << "LookAhead: " << this->dfsLookAhead << "\t";
+	if (preliminaryEval < MAX_COST)
+		cout << "preEval: " << (int)preliminaryEval << "\t";
+#endif
+
+	if (this->dfsLookAhead > 0) {
+
+		clock_t evalTime = 0;
+		do {
+			clock_t startEval = clock();
+			evaluateMoves(validMoves, board, bestCost, bestMoveIndex);
+			endTime = clock();
+			evalTime += (endTime - startEval);
+		} while ((bestCost > 1000) && (evalTime < CLOCKS_PER_SEC) && ++dfsLookAhead < MAX_LOOK_AHEAD);
 	}
 
-	unsigned char validMoves = BoardLogic::getValidMoves(board);
-	bool isSingleMove = false;
-	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
-		Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
-		if (validMoves == move) {
-			isSingleMove = true;
-			bestMoveIndex = moveIndex;
-		}
-	}
-
-	if (isSingleMove == false) {
-		for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
-			Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
-			if ((validMoves & move) != 0) {
-				Board movedBoard = BoardLogic::performMove(board, move);
-				float score = depthFirstSolve(0, movedBoard);
-				if (bestScore > score) {
-					bestScore = score;
-					bestMoveIndex = moveIndex;
-				}
-			}
-		}
-	}
+#ifdef ENABLE_STDOUT
+	cout << "Eval: " << bestCost << endl;
+#endif
 
 	moveCounter[bestMoveIndex]++;
 
-	clock_t endTime = clock();
-	cpuTime += (endTime - startTime);
-	dfsLookAhead = baseLookAhead;
+	this->cpuTime += (endTime - startTime);
+	this->costEst = bestCost;
+	this->lastLookAhead = this->dfsLookAhead;
 
 	return (Move::MoveEnum)(1 << bestMoveIndex);
 }
 
-float Engine::depthFirstSolve(int index, Board b) {
-	if (BoardLogic::hasEmptyTile(b) == false) {
-		return (float)evaluateBoard(b);
+void Engine::evaluateMoves(const unsigned char moves, Board b, float& bestCost, int& bestMoveIndex) {
+	// Bind lookahead to valid range
+	if (dfsLookAhead > MAX_LOOK_AHEAD) {
+		dfsLookAhead = MAX_LOOK_AHEAD;
+	} else if (dfsLookAhead < 1) {
+		dfsLookAhead = 1;
 	}
 
+	clearHash();
+
+	bestCost = MAX_COST;
+	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
+		Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
+		if ((moves & move) != 0) {
+			Board movedBoard = BoardLogic::performMove(b, move);
+			float score = depthFirstSolve(0, movedBoard);
+			if (bestCost > score) {
+				bestCost = score;
+				bestMoveIndex = moveIndex;
+			}
+		}
+	}
+}
+
+float Engine::depthFirstSolve(int index, Board b) {
 	float scores[BOARD_SIZE_SQ][NEW_VALUE_COUNT];
 	for (int i = 0; i < BOARD_SIZE_SQ; i++) {
 		for (int j = 0; j < NEW_VALUE_COUNT; j++) {
-			scores[i][j] = MAX_SCORE;
+			scores[i][j] = MAX_COST;
 		}
 	}
 
 	SearchNode& node = nodes[index];
 	node.generateChildren(b);
 
-#ifdef ENABLE_SAMPLING
-	// Divide the 4 random numbers into 8 parts.
-	uint16_t* res16 = (uint16_t*)(fastRng->res);
-#endif
-
 	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
 		for (int v = 0; v < NEW_VALUE_COUNT; v++) {
 			int childCount = node.childCount[moveIndex][v];
 
-#ifdef ENABLE_SAMPLING
-			// Initialize sampling variables.
-			int sampleCount = 8;
-			int samples[MAX_SEARCH_NODE_CHILDREN];
-			for (int i = 0; i < childCount; i++) {
-				samples[i] = i;
-			}
-			if (sampleCount < childCount) {
-				// Get random numbers
-				FastRand_SSE(fastRng);
-				for (int i = 0; i < sampleCount; i++) {
-					// j is a random integer with i <= j < n.
-					int j = ((res16[i] % (childCount - i)) + i);
-					// exchange samples[j] and samples[i].
-					int t = samples[i];
-					samples[i] = samples[j];
-					samples[j] = t;
-				}
-			} else {
-				sampleCount = childCount;
-			}
-
-			for (int sampleIndex = 0; sampleIndex < sampleCount; sampleIndex++) {
-				// Get child node
-				int childIndex = samples[sampleIndex];
-#else
 			for (int childIndex = 0; childIndex < childCount; childIndex++) {
-#endif
 				ChildNode& childNode = node.children[moveIndex][childIndex][v];
 
 				// Get score from hashmap, by recursion or from evaluateBoard().
 				float score;
-				if (index >= dfsLookAhead - 1) {
+				if (BoardLogic::hasValidMoves(childNode.board) == false) {
+					score = GAMEOVER_COST;
+				}  else if (index >= dfsLookAhead - 2) {
 					score = (float)evaluateBoard(childNode.board);
 				} else {
-#ifdef ENABLE_HASHING
 #ifdef CUSTOM_HASHING
-					score = boardHashTable.get(childNode.board);
+					uint64_t hashIndex = boardHashTable.getIndex(childNode.board);
+					score = boardHashTable.getValue(hashIndex);
 					if (score != boardHashTable.nullValue) {
 #else
 					hash_t::const_iterator it = scoreMap.find(childNode.board);
 					if (it != scoreMap.end()) {
 						score = it->second;
 #endif
-					//hash_t::const_iterator it = scoreMap.find(childNode.board);
-					//if (score != boardHashTable.nullValue) {
-					//	if (it == scoreMap.end() || score != it->second) {
-					//		std::cout << "Hash collision: {";
-					//		Board h = BoardHashTable::hash(childNode.board) % boardHashTable.size;
-					//		std::vector<Board> boards = reverseHashTable[h];
-					//		for (int i = 0; i < boards.size(); i++) {
-					//			std::cout << "16^^" << std::hex << std::setfill('0') << std::setw(16) << boards.at(i) << ",";
-					//		}
-					//		std::cout << "16^^" << std::hex << std::setfill('0') << std::setw(16) << childNode.board << "}" << std::endl;
-					//	}
-					//}
-
 						hashHits++;
 					} else {
+						hashMisses++;
 						score = depthFirstSolve(index + 1, childNode.board);
-
 #ifdef CUSTOM_HASHING
-						boardHashTable.put(childNode.board, score);
+						boardHashTable.putValue(hashIndex, score);
 #else
 						scoreMap.insert(hash_t::value_type(childNode.board, score));
 #endif
-
-						//Board h = BoardHashTable::hash(childNode.board) % boardHashTable.size;
-						//reverseHashTable[h].push_back(childNode.board);
-
-						hashMisses++;
 					}
-#else
-					score = depthFirstSolve(index + 1, childNode.board, childScoreSum);
-#endif
 				}
 
 				// Update score matrix.
-				for (int p = 0; p < 4 && childNode.positions[p] >= 0; p++) {
-					int position = childNode.positions[p];
-					if (position >= 0) {
-						float& oldScore = scores[position][v];
-						if (oldScore > score)
-							oldScore = score;
-						nodeCounter++;
-					} else {
-						break;
-					}
-				}
+				int8_t* pPos = childNode.positions;
+				int8_t* pPosEnd = childNode.positions + 4;
+				int8_t p = *pPos;
+				do {
+					float& oldScore = scores[p][v];
+					if (oldScore > score)
+						oldScore = score;
+					nodeCounter++;
+				} while (++pPos != pPosEnd && (p = *pPos) >= 0);
 			}
 		}
 	}
@@ -276,7 +260,7 @@ float Engine::depthFirstSolve(int index, Board b) {
 	float totalWeight = 0;
 	for (int p = 0; p < BOARD_SIZE_SQ; p++) {
 		for (int v = 0; v < NEW_VALUE_COUNT; v++) {
-			if (scores[p][v] != MAX_SCORE) {
+			if (scores[p][v] != MAX_COST) {
 				result += pValue[v] * scores[p][v];
 				totalWeight += pValue[v];
 			}
@@ -289,48 +273,33 @@ float Engine::depthFirstSolve(int index, Board b) {
 }
 
 uint32_t Engine::evaluateBoard(Board b) {
-
-	if (BoardLogic::hasValidMoves(b) == false) {
-		return 1 << 14;
-	}
-
 	Board previousTile = b & TILE_MASK;
-	// If first tile is empty, ignore first two tiles.
+	// If first tile is empty, ignore first tile.
 	if (previousTile == 0)
 		b >>= TILE_BITS;
 
-	// Flip odd rows
-#if BOARD_SIZE == 4
-	b = (b & 0x0000FFFF0000FFFF) |
-		((b & 0x000F0000000F0000) << 12) |
-		((b & 0x00F0000000F00000) << 4) |
-		((b & 0x0F0000000F000000) >> 4) |
-		((b & 0xF0000000F0000000) >> 12);
-#else
-	#error TODO: implement for case != 4
-#endif
+	b = BoardLogic::flipOddRows(b);
 
-	uint32_t score = 0;
+	uint32_t cost = 0;
 	// Find first tile that is lower than its previous tile.
-	while (b != 0) {
+	while (true) {
 		b >>= TILE_BITS;
 		Board tile = b & TILE_MASK;
 
-		if (tile > previousTile) {
+		if (tile <= previousTile && b != 0) {
+			previousTile = tile;
+		} else {
 			break;
 		}
-
-		previousTile = tile;
 	}
 
 	// Sum all subsequent tiles.
 	while (b != 0) {
-		int tile = (b & TILE_MASK);
-		score += (1 << tile) - 1;
+		cost += (1 << (b & TILE_MASK)) - 1;
 		b >>= TILE_BITS;
 	}
 
-	return score;
+	return cost;
 }
 
 int Engine::maxTileAfterSequence(Board b) {
@@ -338,31 +307,12 @@ int Engine::maxTileAfterSequence(Board b) {
 	if (BoardLogic::hasValidMoves(b) == false)
 		return 1;
 
-	// Flip odd rows
-#if BOARD_SIZE == 4
-	b = (b & 0x0000FFFF0000FFFF) |
-		((b & 0x000F0000000F0000) << 12) |
-		((b & 0x00F0000000F00000) << 4) |
-		((b & 0x0F0000000F000000) >> 4) |
-		((b & 0xF0000000F0000000) >> 12);
-#else
-#error TODO: implement for case != 4
-#endif
+	int seqLen = Engine::sequenceLength(b);
+	b = BoardLogic::flipOddRows(b);
+	// Remove sequence
+	b >>= seqLen * TILE_BITS;
 
-	// Find first tile that is lower than its previous tile.
-	Board previousTile = b & TILE_MASK;
-	while (b != 0) {
-		b >>= TILE_BITS;
-		Board tile = b & TILE_MASK;
-
-		if (tile > previousTile) {
-			break;
-		}
-
-		previousTile = tile;
-	}
-
-	// Sum all subsequent tiles.
+	// Find max tile left on board
 	while (b != 0) {
 		int tile = (b & TILE_MASK);
 		if (tile > maxTile) maxTile = tile;
@@ -371,6 +321,42 @@ int Engine::maxTileAfterSequence(Board b) {
 
 	return maxTile;
 
+}
+
+int Engine::sequenceLength(Board b) {
+	b = BoardLogic::flipOddRows(b);
+
+	Board previousTile = b & TILE_MASK;
+
+	// Count sequence length
+	int len = previousTile > 0 ? 1 : 0;
+	while (true) {
+		b >>= TILE_BITS;
+		Board tile = b & TILE_MASK;
+
+		if (tile <= 1) {
+			break;
+		}
+		if (tile >= previousTile) {
+			len++;
+			break;
+		}
+
+		previousTile = tile;
+		len++;
+	}
+
+	return len;
+}
+
+int Engine::getMoveIndex(Move::MoveEnum move) {
+	switch (move) {
+		case Move::Up: return 0;
+		case Move::Right: return 1;
+		case Move::Down: return 2;
+		case Move::Left: return 3;
+		default: return -1;
+	}
 }
 
 void Engine::setRandomTile(Board& board) {
