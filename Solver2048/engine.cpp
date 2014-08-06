@@ -64,73 +64,41 @@ Move::MoveEnum Engine::solve(Board board) {
 	clock_t endTime;
 	unsigned char validMoves = BoardLogic::getValidMoves(board);
 	int bestMoveIndex = 0;
-	float bestCost = 0;
+	float cost = 0;
 
 	hashHits = 0;
 	hashMisses = 0;
 
-	int maxBadTile = maxTileAfterSequence(board);
-	int sequenceLen = sequenceLength(board);
-	Tile firstTile = (1 << BoardLogic::getTile(board, 0, 0)) & ~1;
+	int tileSum = BoardLogic::sumTiles(board);
+	int seqSum = sequenceSum(board);
 
-	double freeFactor = (float)(BOARD_SIZE_SQ - sequenceLen) / (float)BOARD_SIZE_SQ;
-	double boundedMaxTile = fmin(7, maxBadTile);
-	double baseLookAhead = 2 + (double)boundedMaxTile / (3 * freeFactor + 0.1);
+	// Estimate lookahead based on previous cost estimate.
+	double baseLookAhead = 4 + (this->costEst / 50);
 
-	// Based on empty tiles after moves.
-	int maxEmptyTileCount = 0;
-	for (int moveIndex = 0; moveIndex < 4; moveIndex++) {
-		Move::MoveEnum move = (Move::MoveEnum)(1 << moveIndex);
-		Board movedBoard = BoardLogic::performMove(board, move);
-		int emptyTileCount = BoardLogic::getEmptyCount(movedBoard);
-		if (emptyTileCount > maxEmptyTileCount) {
-			maxEmptyTileCount = emptyTileCount;
-		}
-	}
-	if (maxEmptyTileCount <= 2 && firstTile >= 4096) {
-		baseLookAhead += 3;
-	} else if (maxEmptyTileCount <= 3) {
-		baseLookAhead += 1;
-	} else if (maxEmptyTileCount <= 2) {
-		baseLookAhead += 2;
-	} else if (maxEmptyTileCount <= 1) {
-		baseLookAhead += 3;
+	double minLookAhead = 4;
+	double maxLookAhead = 9;
+	if (tileSum > 30000) {
+		minLookAhead = 9;
+		maxLookAhead = 12;
+	} else if (tileSum > 16000) {
+		minLookAhead = 7;
+		maxLookAhead = 11;
+	} else if (tileSum > 8000) {
+		minLookAhead = 6;
+		maxLookAhead = 11;
+	} else if (tileSum > 4000) {
+		minLookAhead = 5;
+		maxLookAhead = 10;
 	}
 
-	// Clamp lookahead depending on sequence length and first tile.
-	float preliminaryEval = MAX_COST;
-	if (firstTile >= 8192) {
-		if (this->lastLookAhead > 4) {
-			preliminaryEval = costEst;
-		} else {
-			this->dfsLookAhead = 4;
-			evaluateMoves(validMoves, board, preliminaryEval, bestMoveIndex);
-		}
-
-		if (firstTile >= 16384 && preliminaryEval > 1000 && maxEmptyTileCount <= 3) {
-			if (sequenceLen >= 10) {
-				baseLookAhead = 13;
-			} else if (sequenceLen >= 7) {
-				baseLookAhead = 12;
-			} else {
-				baseLookAhead = 11;
-			}
-		} else if (preliminaryEval > 500 && maxEmptyTileCount <= 3) {
-			baseLookAhead++;
-			baseLookAhead = fmax(10, baseLookAhead);
-			baseLookAhead = fmin(11, baseLookAhead);
-		} else if (preliminaryEval > 100) {
-			baseLookAhead = fmax(9, baseLookAhead);
-			baseLookAhead = fmin(11, baseLookAhead);
-		} else {
-			baseLookAhead = fmax(6, baseLookAhead);
-			baseLookAhead = fmin(10, baseLookAhead);
-		}
-	} else {
-		// This board is not good, restrict the look ahead.
-		baseLookAhead = fmax(4, baseLookAhead);
-		baseLookAhead = fmin(6, baseLookAhead);
+	if (seqSum < 2048) {
+		maxLookAhead = 9;
 	}
+
+	// Clamp between min and max.
+	baseLookAhead = round(baseLookAhead);
+	baseLookAhead = fmax(minLookAhead, baseLookAhead);
+	baseLookAhead = fmin(maxLookAhead, baseLookAhead);
 	this->dfsLookAhead = (int)baseLookAhead;
 
 	// Determine whether multiple moves are possible.
@@ -139,32 +107,23 @@ Move::MoveEnum Engine::solve(Board board) {
 		this->dfsLookAhead = 0;
 	}
 
-#ifdef ENABLE_STDOUT
-	// Engine performance statistics
-	cout << "LookAhead: " << this->dfsLookAhead << "\t";
-	if (preliminaryEval < MAX_COST)
-		cout << "preEval: " << (int)preliminaryEval << "\t";
-#endif
-
+	// Perform evaluation
 	if (this->dfsLookAhead > 0) {
+		evaluateMoves(validMoves, board, cost, bestMoveIndex);
 
-		clock_t evalTime = 0;
-		do {
-			clock_t startEval = clock();
-			evaluateMoves(validMoves, board, bestCost, bestMoveIndex);
-			endTime = clock();
-			evalTime += (endTime - startEval);
-		} while ((bestCost > 1000) && (evalTime < CLOCKS_PER_SEC) && ++dfsLookAhead < MAX_LOOK_AHEAD);
+		// Perform evaluation again if the cost drops.
+		if (cost - this->costEst > 50 && this->dfsLookAhead < maxLookAhead) {
+			this->dfsLookAhead = maxLookAhead;
+			evaluateMoves(validMoves, board, cost, bestMoveIndex);
+		}
 	}
 
-#ifdef ENABLE_STDOUT
-	cout << "Eval: " << bestCost << endl;
-#endif
+	endTime = clock();
 
 	moveCounter[bestMoveIndex]++;
 
 	this->cpuTime += (endTime - startTime);
-	this->costEst = bestCost;
+	this->costEst = cost;
 	this->lastLookAhead = this->dfsLookAhead;
 
 	return (Move::MoveEnum)(1 << bestMoveIndex);
@@ -219,25 +178,27 @@ float Engine::depthFirstSolve(int index, Board b) {
 				}  else if (index >= dfsLookAhead - 2) {
 					score = (float)evaluateBoard(childNode.board);
 				} else {
+#ifdef ENABLE_HASHING
 #ifdef CUSTOM_HASHING
 					uint64_t hashIndex = boardHashTable.getIndex(childNode.board);
 					score = boardHashTable.getValue(hashIndex);
 					if (score != boardHashTable.nullValue) {
-#else
+#elif defined(GOOGLE_HASHING)
 					hash_t::const_iterator it = scoreMap.find(childNode.board);
 					if (it != scoreMap.end()) {
 						score = it->second;
 #endif
-						hashHits++;
 					} else {
-						hashMisses++;
+#endif
 						score = depthFirstSolve(index + 1, childNode.board);
+#ifdef ENABLE_HASHING
 #ifdef CUSTOM_HASHING
 						boardHashTable.putValue(hashIndex, score);
-#else
+#elif defined(GOOGLE_HASHING)
 						scoreMap.insert(hash_t::value_type(childNode.board, score));
 #endif
 					}
+#endif
 				}
 
 				// Update score matrix.
@@ -320,6 +281,20 @@ int Engine::maxTileAfterSequence(Board b) {
 	}
 
 	return maxTile;
+
+}
+
+int Engine::sequenceSum(Board b) {
+	int sum = 0;
+
+	int seqLen = Engine::sequenceLength(b);
+	b = BoardLogic::flipOddRows(b);
+	for (int i = 0; i < seqLen; i++) {
+		sum += b & TILE_MASK;
+		b >>= TILE_BITS;
+	}
+
+	return sum;
 
 }
 

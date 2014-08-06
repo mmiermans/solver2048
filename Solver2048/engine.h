@@ -7,6 +7,9 @@
 #if defined(GOOGLE_HASHING_SPARSE) || defined(GOOGLE_HASHING_DENSE)
 #define GOOGLE_HASHING
 #endif
+#if defined(GOOGLE_HASHING_SPARSE) || defined(GOOGLE_HASHING_DENSE) || defined(CUSTOM_HASHING)
+#define ENABLE_HASHING
+#endif
 
 #include <time.h>
 
@@ -67,7 +70,8 @@ private:
 
 #ifdef CUSTOM_HASHING
 	BoardHashTable boardHashTable;
-#else
+#endif
+#ifdef GOOGLE_HASHING
 	hash_t scoreMap;
 #endif
 	
@@ -78,6 +82,8 @@ private:
 	float depthFirstSolve(int index, Board b);
 
 	int maxTileAfterSequence(Board b);
+	
+	int sequenceSum(Board b);
 
 	int sequenceLength(Board b);
 

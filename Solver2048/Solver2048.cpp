@@ -52,6 +52,9 @@ int main(int argc, char* argv[]) {
 	MySqlConnector mySqlConnector;
 #endif
 
+	clock_t startTime = clock();
+	clock_t lastPrintTime = startTime;
+
 	// RESTART GAME LOOP
 	while (true) {
 		Engine e;
@@ -73,8 +76,6 @@ int main(int argc, char* argv[]) {
 		// Debug variables
 		int lastMoveCount = moveCount;
 		int lastCost = 0;
-		clock_t startTime = clock();
-		clock_t lastPrintTime = startTime;
 		const int printStep = CLOCKS_PER_SEC;
 		int maxLookAhead = 0;
 		clock_t currentTime;
@@ -105,7 +106,10 @@ int main(int argc, char* argv[]) {
 					<< "s\t";
 				cout << "Score: " << score;
 				cout << endl;
-				
+
+				cout << "LookAhead: " << e.dfsLookAhead << "\t";
+				cout << "Eval: " << e.costEst << endl;
+
 				// Speed stats
 				cout << "Moves/s: "
 					<< (CLOCKS_PER_SEC * (moveCount - lastMoveCount))

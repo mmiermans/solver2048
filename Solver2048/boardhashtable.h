@@ -8,7 +8,7 @@
 class BoardHashTable
 {
 public:
-	static const int sizePower = 27; // 27 = 512 MB
+	static const int sizePower = 25; // 27 = 512 MB
 	static const int sizeMask = (1<<sizePower) - 1;
 	static const int size = 1<<sizePower;
 	const float nullValue = FLT_MAX;
