@@ -3,11 +3,13 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Jul 27, 2014 at 05:58 PM
+-- Generation Time: Aug 08, 2014 at 02:59 PM
 -- Server version: 5.5.38-0ubuntu0.14.04.1
 -- PHP Version: 5.5.9-1ubuntu4.3
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
+START TRANSACTION;
 SET time_zone = "+00:00";
 
 
@@ -19,6 +21,8 @@ SET time_zone = "+00:00";
 --
 -- Database: `solver2048`
 --
+CREATE DATABASE IF NOT EXISTS `solver2048` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci;
+USE `solver2048`;
 
 DELIMITER $$
 --
@@ -26,6 +30,7 @@ DELIMITER $$
 --
 CREATE DEFINER=`root`@`localhost` PROCEDURE `get_game_moves`(IN `p_game_id` INT, IN `p_move_count` INT)
     READS SQL DATA
+    DETERMINISTIC
 BEGIN
 	SELECT `id`, `has_ended`
 	FROM games
@@ -79,8 +84,9 @@ CREATE TABLE IF NOT EXISTS `games` (
   `has_ended` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'True if the game has reached a deadlocked position.',
   `board` bigint(20) unsigned zerofill NOT NULL DEFAULT '00000000000000000000' COMMENT 'Board position encoded in 64-bit integer.',
   `move_count` int(11) NOT NULL DEFAULT '0' COMMENT 'Number of moves so far including this move.',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Stores game state and statistics' AUTO_INCREMENT=1 ;
+  PRIMARY KEY (`id`),
+  KEY `has_ended_index` (`has_ended`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Stores game state and statistics';
 
 -- --------------------------------------------------------
 
@@ -101,7 +107,7 @@ CREATE TABLE IF NOT EXISTS `moves` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `game_move_index` (`game_id`,`move_count`),
   KEY `game_id` (`game_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Information regarding individual moves.' AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Information regarding individual moves.';
 
 --
 -- Constraints for dumped tables
@@ -112,6 +118,7 @@ CREATE TABLE IF NOT EXISTS `moves` (
 --
 ALTER TABLE `moves`
   ADD CONSTRAINT `moves_game_id` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

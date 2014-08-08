@@ -99,7 +99,12 @@
   <script src="js/application.js"></script>
 
   <script>
-    window.bootMoveFeed = <?php include 'bootstrapped.php'; ?>;
+    window.bootMoveFeed = <?php
+      $fetchGameStats = true;
+      $enableJsonContentType = false;
+      include 'getmovefeed.php';
+    ?>;
+    
     window.startApplication();
   </script>
 </body>
