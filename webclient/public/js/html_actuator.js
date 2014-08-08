@@ -141,15 +141,28 @@ HTMLActuator.prototype.clearMessage = function () {
 
 HTMLActuator.prototype.loadCharts = function (data) {
   if (!data || data.length == 0) return;
-  
+    
   var maxTileData = data["max_tile"];
-  var minCat = 1<<16;
-  var maxCat = 2;
-  for (var i = 0; i < maxTileData.length; i++) {
-    minCat = Math.min(minCat, maxTileData[i][0]);
-    maxCat = Math.max(maxCat, maxTileData[i][0]);
+  
+  // Ensure maxTileData is an array
+  if (typeof maxTileData === 'object') {
+    var maxTileArray = [];
+    for (var k in maxTileData) {
+      if (maxTileData.hasOwnProperty(k)) {
+        maxTileArray.push([parseInt(k), maxTileData[k]]);
+      }
+    }
+    maxTileData = data["max_tile"] = maxTileArray;
   }
   
+  // Sort array by max tile value (category)
+  maxTileData.sort(function(a, b) {
+    return a[0] - b[0];
+  });
+
+  // Create categories for HighCharts
+  var minCat = maxTileData[0][0];
+  var maxCat = maxTileData[maxTileData.length - 1][0];
   var maxTileCategories = [];
   var maxTileSeries = [];
   for (var i = minCat, j = 0; i <= maxCat; i *= 2) {
@@ -193,6 +206,7 @@ HTMLActuator.prototype.loadCharts = function (data) {
     }]
   });
   
+  // Create boxplot of score
   this.loadScoreChart(data.score);
 };
 

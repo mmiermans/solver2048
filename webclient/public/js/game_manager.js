@@ -11,9 +11,10 @@ function GameManager(size, InputManager, Actuator, bootFeed) {
   this.maxMovePeriod = 2000;
   this.isRequestInProgress = false;
   this.lastRequestTime = Date.now();
+  this.gamesAddedToStats = [];
   
   this.setup(bootFeed, true);
-  
+
   this.stats = bootFeed["stats"];
   this.actuator.loadCharts(this.stats);
   this.bestScore = Math.max.apply(null, this.stats.score);
@@ -74,7 +75,9 @@ GameManager.prototype.setup = function (bootFeed, enableTimer) {
     var sliceIndex = Math.max(0, len - 2*(this.requestPeriod / this.movePeriod));
     this.executedMoves = parsedFeed.moves.slice(0, sliceIndex);
     this.concatMoves(parsedFeed.moves.slice(sliceIndex, len));
-  } else {
+    
+    if (bootFeed.game.has_ended)
+      this.gamesAddedToStats.push(bootFeed.game.id);
   }
 
   if (enableTimer) {
@@ -124,25 +127,25 @@ GameManager.prototype.requestMoves = function () {
       
       // Only accept games larger than requestMinGame.
       if (!that.requestMinGame || parsed.game.id >= that.requestMinGame) {
-        that.requestMinGame = 0;
         that.gameInfo = parsed.game;
         var newMoves = parsed.moves;
         var curTime = Date.now();
-        that.isRequestInProgress = false;
         
-        // Estimate roundtrip
-        that.roundTrip = curTime - that.requestTime;
-        
-        // Estimate milliseconds/move
-        var requestDelta = Math.max(0, curTime - that.lastRequestTime - (that.requestPeriod / 2));
-        var newEstimate = Math.min(2000, requestDelta / (newMoves.length + 0.5));
-        var avgPeriod = (newEstimate + that.movePeriod) / 2;
-        var feedError = ((that.moveFeed.length + 0.5) * avgPeriod) / that.feedTarget;
-        that.movePeriodTarget = newEstimate / feedError;
-        that.movePeriodTarget = Math.max(that.movePeriodTarget, 0);
-        that.movePeriodTarget = Math.min(that.movePeriodTarget, that.requestPeriod);
+        if (!that.requestMinGame) {
+          // Estimate milliseconds/move
+          var requestDelta = Math.max(0, curTime - that.lastRequestTime - (that.requestPeriod / 2));
+          var newEstimate = Math.min(2000, requestDelta / (newMoves.length + 0.5));
+          var avgPeriod = (newEstimate + that.movePeriod) / 2;
+          var feedError = ((that.moveFeed.length + 0.5) * avgPeriod) / that.feedTarget;
+          that.movePeriodTarget = newEstimate / feedError;
+          that.movePeriodTarget = Math.max(that.movePeriodTarget, 0);
+          that.movePeriodTarget = Math.min(that.movePeriodTarget, that.requestPeriod);
+        }
 
+        that.roundTrip = curTime - that.requestTime;
         that.concatMoves(newMoves);
+        that.requestMinGame = 0;
+        that.isRequestInProgress = false;
       }
       
       that.lastRequestTime = curTime;
@@ -245,7 +248,10 @@ GameManager.prototype.executeMoveFromFeed = function () {
 
   if (this.moveFeed.length == 0 && this.gameInfo.has_ended) {
     this.over = true;
-    this.actuator.updateCharts(this.stats, this.getMaxTile(), this.score);
+    if (this.gamesAddedToStats.indexOf(this.gameInfo.id) < 0) {
+      this.gamesAddedToStats.push(this.gameInfo.id);
+      this.actuator.updateCharts(this.stats, this.getMaxTile(), this.score);
+    }
   }
   
   this.moveFeedIndex++;
