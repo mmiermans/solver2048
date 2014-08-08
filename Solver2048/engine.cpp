@@ -290,7 +290,7 @@ int Engine::sequenceSum(Board b) {
 	int seqLen = Engine::sequenceLength(b);
 	b = BoardLogic::flipOddRows(b);
 	for (int i = 0; i < seqLen; i++) {
-		sum += b & TILE_MASK;
+		sum += 1 << (b & TILE_MASK);
 		b >>= TILE_BITS;
 	}
 
