@@ -197,9 +197,12 @@ HTMLActuator.prototype.loadCharts = function (data) {
 };
 
 HTMLActuator.prototype.loadScoreChart = function (scoreData) {
+  var scoreLen = scoreData.length;
+  if (scoreLen == 0)
+    return;
+  
   scoreData.sort(function(a, b){return a-b});
   
-  var scoreLen = scoreData.length
   var sum = scoreData.reduce(function(a, b) {
     return a + b;
   });

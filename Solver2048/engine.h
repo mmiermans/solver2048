@@ -77,7 +77,7 @@ private:
 	
 	void clearHash();
 
-	void Engine::evaluateMoves(const unsigned char moves, Board b, float& bestCost, int& bestMoveIndex);
+	void evaluateMoves(const unsigned char moves, Board b, float& bestCost, int& bestMoveIndex);
 
 	float depthFirstSolve(int index, Board b);
 

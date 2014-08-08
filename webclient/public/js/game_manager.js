@@ -16,7 +16,7 @@ function GameManager(size, InputManager, Actuator, bootFeed) {
   
   this.stats = bootFeed["stats"];
   this.actuator.loadCharts(this.stats);
-  this.bestScore = Math.max.apply(null, this.stats.score);
+  this.bestScore = Math.max.apply(0, this.stats.score);
 
   window.actuator = this.actuator;
 }
