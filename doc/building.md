@@ -1,6 +1,15 @@
 Build
 ==========
 
+**Table of Contents**
+
+- [Game engine](#user-content-game-engine)
+	- [Windows 64-bit](#user-content-windows-64-bit)
+	- [Linux 64-bit](#user-content-linux-64-bit)
+		- [Command line](#user-content-command-line)
+		- [Eclipse](#user-content-eclipse)
+- [Streaming server](#user-content-streaming-server)
+
 ## Game engine
 
 TL;DR: `git clone https://github.com/mmiermans/solver2048.git && cd solver2048/Solver2048 && make && ./Debug/Solver2048`
