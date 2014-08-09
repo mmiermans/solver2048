@@ -22,8 +22,6 @@ Open the `.sln` solution file with Visual Studio. Build in release mode to get t
 
 ### Linux 64-bit
 
-Clone the project:
-
 ```
 git clone https://github.com/mmiermans/solver2048.git
 ```
@@ -44,7 +42,7 @@ If your preference is to use Eclipse, then open Eclipse and import the project f
 
 ## Streaming server
 
-The game engine's progress can [streamed live over the internet](http://32768.eu). The server reponsible for this stream can be set up using the following steps:
+The game engine's progress can be [streamed live over the internet](http://32768.eu), and the following steps tell you how to accomplish this:
 
 1. Refresh your package index: `sudo apt-get update`
 2. Install LAMP server: `sudo apt-get install lamp-server^ `
