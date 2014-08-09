@@ -1,4 +1,4 @@
-Build
+Building Solver2048
 ==========
 
 **Table of Contents**
