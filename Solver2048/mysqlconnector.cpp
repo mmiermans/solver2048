@@ -147,8 +147,8 @@ void MySqlConnector::insertMove(
 	values += "\n(" + Convert<int>::toString(gameId);
 	values += "," + Convert<Board>::toString(boardBeforeMove);
 	values += "," + Convert<int>::toString(scoreBeforeMove);
-	values += ",'" + Convert<int>::toString((int)move);
-	values += "'," + Convert<int>::toString(moveCount);
+	values += "," + Convert<int>::toString((int)move);
+	values += "," + Convert<int>::toString(moveCount);
 	values += "," + Convert<int>::toString(newTileValue);
 	values += "," + Convert<int>::toString(newTilePosition);
 	values += ")";
@@ -157,8 +157,7 @@ void MySqlConnector::insertMove(
 
 	clock_t currentTime = clock();
 	bool isLengthTriggered = (queryBufferCount >= queryBufferCountTrigger);
-	bool isTimeTriggered = ((currentTime - queryBufferFlushTime)
-			>= (queryBufferTimeTrigger * CLOCKS_PER_SEC));
+	bool isTimeTriggered = ((currentTime - queryBufferFlushTime) >= queryBufferTimeTrigger);
 	// Flush buffer if triggers are activated.
 	if (isLengthTriggered || isTimeTriggered || hasEnded) {
 		// Send the query to MySQL

@@ -37,15 +37,15 @@ GameManager.prototype.nextGame = function () {
 // Initialize grid to first move in feed
 GameManager.prototype.initGrid = function (m) {
   if (m) {
-    this.grid        = new Grid(this.size, m.board_before_move);
-    this.score       = 0;
-    this.over        = false;
-    this.won         = this.hasWon();
+    this.grid    = new Grid(this.size, m.board_before_move);
+    this.score   = m.score_before_move;
+    this.over    = false;
+    this.won     = this.hasWon();
   } else {
-    this.grid        = new Grid(this.size);
-    this.score       = 0;
-    this.over        = false;
-    this.won         = false;
+    this.grid    = new Grid(this.size);
+    this.score   = 0;
+    this.over    = false;
+    this.won     = false;
   }
 };
 
@@ -230,11 +230,14 @@ GameManager.prototype.processMoveFeed = function () {
   // Schedule a new move.
   if (timeoutPeriod == 0 &&
       that.moveStackCounter !== undefined &&
-      that.moveStackCounter < 2048) {
+      that.lastTimerEvent !== undefined &&
+      that.moveStackCounter < 2048 &&
+      window.performance.now() - that.lastTimerEvent < 1000/24) {
     that.moveStackCounter++;
     that.processMoveFeed();
   } else {
     that.moveStackCounter = 0;
+    that.lastTimerEvent = window.performance.now();
     window.setTimeout(function() {
       that.processMoveFeed();
     }, timeoutPeriod);
@@ -445,7 +448,7 @@ GameManager.prototype.tileMatchesAvailable = function () {
   return false;
 };
 
-// Calculate score from grid
+// Find maximum tile on grid
 GameManager.prototype.getMaxTile = function() {
   var maxTile = 0;
   this.grid.eachCell(function (x, y, tile) {
@@ -455,22 +458,6 @@ GameManager.prototype.getMaxTile = function() {
   });
   return maxTile;
 }
-
-// Calculate score from grid
-GameManager.prototype.calculateScore = function (moveCount) {
-  var score = 0;
-  var tileSum = 0;
-  this.grid.eachCell(function (x, y, tile) {
-    if (tile && tile.value > 0) {
-      score += tile.value * Math.round(Math.log(tile.value) / Math.LN2) - 1;
-      tileSum += tile.value;
-    }
-  });
-  // Subtract score lost from 4 tiles that were inserted.
-  // Assumes first two tiles were 2's.
-  var lossFrom4 = 2 * (tileSum - (2 * moveCount) - 4);
-  return score - lossFrom4;
-};
 
 // Determine whether a tile of value >= 2048 exists
 GameManager.prototype.hasWon = function () {

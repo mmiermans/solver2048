@@ -58,7 +58,7 @@ private:
 	int queryBufferCount;
 	clock_t queryBufferFlushTime;
 	static const int queryBufferCountTrigger = 512;
-	static const clock_t queryBufferTimeTrigger = 4;
+	static const clock_t queryBufferTimeTrigger = 4*CLOCKS_PER_SEC;
 
 	const std::string getUpdateGameQuery(int score, int maxTile, bool hasEnded, Board board);
 
