@@ -1,7 +1,7 @@
 Build
 ==========
 
-## Build the game engine
+## Game engine
 
 TL;DR: `git clone https://github.com/mmiermans/solver2048.git && cd solver2048/Solver2048 && make && ./Debug/Solver2048`
 
@@ -33,7 +33,7 @@ Navigate to the project directory with `cd solver2048/Solver2048`. Simply run `m
 #### Eclipse
 If your preference is to use Eclipse, then open Eclipse and import the project from `solver2048/Solver2048`. There are two possible Build Configurations: `Debug_Solver2048` and `Release_Solver2048`. The former can be debugged more easily and the latter is optimized for performance.
 
-## Setup a streaming server
+## Streaming server
 
 The game engine's progress can [streamed live over the internet](http://32768.eu). The server reponsible for this stream can be set up using the following steps:
 
