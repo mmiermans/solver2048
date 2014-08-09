@@ -352,7 +352,7 @@ Board BoardLogic::hasEmptyTile(Board b) {
 int BoardLogic::calculateScoreIncrease(Board before, Board after) {
 	int tileCount[TILE_MAX+1];
 
-	for (int i = 0; i < TILE_MAX; ++i) {
+	for (int i = 0; i <= TILE_MAX; ++i) {
 		tileCount[i] = 0;
 	}
 
@@ -370,10 +370,10 @@ int BoardLogic::calculateScoreIncrease(Board before, Board after) {
 
 	// Sum new tiles
 	int scoreDelta = 0;
-	for (int i = 2; i < TILE_MAX; ++i) {
-		if (tileCount[i] > 0) {
-			scoreDelta += 1 << i;
-		}
+	for (int i = TILE_MAX; i > 1; i--) {
+		scoreDelta += tileCount[i] * (1 << i);
+		// Account for merged tiles.
+		tileCount[i-1] += 2 * tileCount[i];
 	}
 
 	return scoreDelta;

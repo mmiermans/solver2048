@@ -31,12 +31,13 @@ public:
 	void startGame(Board& board, int& moveCount, int& score);
 
 	void insertMove(
-			Board before,
-			Board after,
+			Board boardBeforeMove,
+			Board boardAfterMove,
 			Move::MoveEnum move,
 			int newTilePosition,
 			int newTileValue,
-			int score,
+			int scoreBeforeMove,
+			int scoreAfterMove,
 			int maxTile,
 			bool hasEnded);
 

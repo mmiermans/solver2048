@@ -158,6 +158,7 @@ int main(int argc, char* argv[]) {
 			hasValidMove = (BoardLogic::getValidMoves(b) != (Move::MoveEnum) 0);
 
 			int scoreIncrease = BoardLogic::calculateScoreIncrease(boardBeforeMove, boardAfterMove);
+			int scoreBeforeMove = score;
 			score += scoreIncrease;
 
 #ifdef ENABLE_MYSQL
@@ -169,6 +170,7 @@ int main(int argc, char* argv[]) {
 					bestMove,
 					newTilePosition / TILE_BITS,
 					1 << newTileValue,
+					scoreBeforeMove,
 					score,
 					maxTile,
 					!hasValidMove);

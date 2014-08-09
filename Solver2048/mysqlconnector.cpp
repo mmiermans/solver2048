@@ -108,8 +108,8 @@ void MySqlConnector::startGame(Board& board, int& moveCount, int& score) {
 		score = Convert<int>::fromString(row[3]);
 	} else {
 		// Start a new game.
-		if (mysql_query(con,
-				"INSERT INTO games (start_date, end_date) VALUES(NULL, NULL)")) {
+		const char* createGameQuery = "INSERT INTO games (start_date, end_date) VALUES(NULL, NULL)";
+		if (mysql_query(con, createGameQuery)) {
 			throwMySqlException();
 		}
 
@@ -122,23 +122,31 @@ void MySqlConnector::startGame(Board& board, int& moveCount, int& score) {
 	this->moveCount = moveCount;
 }
 
-void MySqlConnector::insertMove(Board before, Board after, Move::MoveEnum move,
-		int newTilePosition, int newTileValue, int score, int maxTile,
+void MySqlConnector::insertMove(
+		Board boardBeforeMove,
+		Board boardAfterMove,
+		Move::MoveEnum move,
+		int newTilePosition,
+		int newTileValue,
+		int scoreBeforeMove,
+		int scoreAfterMove,
+		int maxTile,
 		bool hasEnded) {
 	// Add to query buffer.
 	moveCount++;
 
-	gameScore = score;
+	gameScore = scoreAfterMove;
 	gameMaxTile = maxTile;
 	gameHasEnded = hasEnded;
-	gameBoardAfter = after;
+	gameBoardAfter = boardAfterMove;
 
 	string values;
 	values.reserve(128);
 	if (queryBufferCount > 0)
 		values += ",";
 	values += "\n(" + Convert<int>::toString(gameId);
-	values += "," + Convert<Board>::toString(before);
+	values += "," + Convert<Board>::toString(boardBeforeMove);
+	values += "," + Convert<int>::toString(scoreBeforeMove);
 	values += ",'" + Convert<int>::toString((int)move);
 	values += "'," + Convert<int>::toString(moveCount);
 	values += "," + Convert<int>::toString(newTileValue);
@@ -200,7 +208,7 @@ void MySqlConnector::flushQueryBuffer() {
 	queryBufferCount = 0;
 	queryBuffer.clear();
 	queryBuffer += "INSERT INTO moves ("
-			"game_id, board_before_move, move_direction, move_count, "
+			"game_id, board_before_move, score_before_move, move_direction, move_count, "
 			"new_tile_value, new_tile_position) VALUES";
 
 	queryBufferFlushTime = clock();

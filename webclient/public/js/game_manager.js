@@ -38,7 +38,7 @@ GameManager.prototype.nextGame = function () {
 GameManager.prototype.initGrid = function (m) {
   if (m) {
     this.grid        = new Grid(this.size, m.board_before_move);
-    this.score       = this.calculateScore(m.move_count);
+    this.score       = 0;
     this.over        = false;
     this.won         = this.hasWon();
   } else {
@@ -73,11 +73,18 @@ GameManager.prototype.setup = function (bootFeed, enableTimer) {
     
     var len = parsedFeed.moves.length;
     var sliceIndex = Math.max(0, len - 2*(this.requestPeriod / this.movePeriod));
+    if (bootFeed.game.has_ended) {
+      this.gamesAddedToStats.push(bootFeed.game.id);
+      sliceIndex = 0;
+      // TODO: DEBUG CODE
+      this.movePeriodTarget = 0;
+      this.movePeriod = 0;
+      this.maxMovePeriod = 5000;
+    }
+
     this.executedMoves = parsedFeed.moves.slice(0, sliceIndex);
     this.concatMoves(parsedFeed.moves.slice(sliceIndex, len));
     
-    if (bootFeed.game.has_ended)
-      this.gamesAddedToStats.push(bootFeed.game.id);
   }
 
   if (enableTimer) {
@@ -221,9 +228,17 @@ GameManager.prototype.processMoveFeed = function () {
   }
 
   // Schedule a new move.
-  window.setTimeout(function() {
+  if (timeoutPeriod == 0 &&
+      that.moveStackCounter !== undefined &&
+      that.moveStackCounter < 2048) {
+    that.moveStackCounter++;
     that.processMoveFeed();
-  }, timeoutPeriod);
+  } else {
+    that.moveStackCounter = 0;
+    window.setTimeout(function() {
+      that.processMoveFeed();
+    }, timeoutPeriod);
+  }
 };
 
 // Performs the first move in the move feed
@@ -256,7 +271,9 @@ GameManager.prototype.executeMoveFromFeed = function () {
   
   this.moveFeedIndex++;
 
-  this.actuate();
+  if (this.over || (window.performance.now() - this.lastActuateTime > 1000/24)) {
+    this.actuate();
+  }
 };
 
 // Sends the updated grid to the actuator
@@ -269,6 +286,7 @@ GameManager.prototype.actuate = function () {
       bestScore:  this.bestScore,
       terminated: this.isGameTerminated()
     });
+    this.lastActuateTime = window.performance.now();
   }
 };
 
