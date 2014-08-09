@@ -22,7 +22,7 @@ The engine has the following features:
 * *Max* and *chance* nodes are generated simultaneously to remove some duplicate nodes early on.
 * More duplicate nodes are prevented with a custom hashmap, which sacrifices theoretical correctness for raw performance and memory efficiency.
 * A simple and efficient cost function is used: sum all tiles, except those lying in a decreasing zig-zag pattern starting from the upper-left corner.
-* For each move, the engine cleverly estimates what the depth of the tree should be (the *look-ahead*):
+* For each move, the engine cleverly determines what the *look-ahead* (tree depth) should be:
   * The look-ahead is based on the cost of the previous move, such that more computational time is spent on bad board positions.
-  * The look-ahead is restricted to a range that depends on the tile sum.
-  * If there is a sharp increase in cost after the board is evaluated, then the evaluation is performed again with the maximum look-ahead.
+  * The look-ahead is restricted to a range that depends on the sum of all tiles.
+  * If there is a sharp increase in cost after the board is evaluated, then the evaluation is performed again with maximum look-ahead.
