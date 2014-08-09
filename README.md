@@ -33,15 +33,11 @@ sudo apt-get install build-essential
 Navigate to the project directory with `cd solver2048/Solver2048`. Simply run `make` or `make release` to generate an executable. The `release` target compiles with the `-O3` optimization option enabled, resulting in significantly better performance. Start the game engine with `./Debug/Solver2048` or `./Release/Solver2048`.
 
 #### Eclipse
-If your preference is to use Eclipse, then open Eclipse and import the project from `solver2048/Solver2048`. There are two possible Build Configurations: `Debug` and `Release`. The former can be debugged more easily and the latter is optimized for performance. You can select the Build Configuration as follows:
-
-<img src="https://raw.githubusercontent.com/mmiermans/solver2048/master/doc/eclipse_build_configurations_dialog.png" alt="Eclipse Build configuration" width="400px"/>
+If your preference is to use Eclipse, then open Eclipse and import the project from `solver2048/Solver2048`. There are two possible Build Configurations: `Debug_Solver2048` and `Release_Solver2048`. The former can be debugged more easily and the latter is optimized for performance.
 
 ## Live web stream
 
-The game engine supports writing its moves in a MySQL database such that the progress can be streamed over the internet.
-
-Setup the server with the following steps:
+The game engine's progress can [streamed live over the internet](http://32768.eu). The server reponsible for this stream can be set up using the following steps:
 
 1. Refresh your package index: `sudo apt-get update`
 2. Install LAMP server: `sudo apt-get install lamp-server^ `
