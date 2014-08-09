@@ -11,6 +11,14 @@ You can view a live stream of the A.I. in action here: [http://32768.eu](http://
 
 TL;DR: `git clone https://github.com/mmiermans/solver2048.git && cd solver2048/Solver2048 && make && ./Debug/Solver2048`
 
+## Performance
+
+* Max-tile histogram and score box-plot are included below the [live stream](http://32768.eu).
+* Up to 17 million nodes/second.
+* Evaluates every possible position, up to 12 moves ahead.
+* Reaches the 16384 tile 55% of the time.
+* Reached 32768 after 42 games in 48 hours.
+
 ## Design
 
 *Main article: [Solver Design](/doc/solver_design.md)*
