@@ -17,11 +17,11 @@ TL;DR: `git clone https://github.com/mmiermans/solver2048.git && cd solver2048/S
 * Up to 17 million nodes/second.
 * Evaluates every possible position, up to 12 moves ahead.
 * Reaches the 16384 tile 55% of the time.
-* Reached 32768 after 42 games in 48 hours.
+* Reached the 32768 tile after 42 games in 48 hours.
 
 ## Design
 
-*Main article: [Solver Design](/doc/solver_design.md)*
+<!-- *Main article: [Solver Design](/doc/solver_design.md)* -->
 
 The solver has the following features:
 
