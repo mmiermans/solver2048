@@ -3,18 +3,18 @@ Building Solver2048
 
 **Table of Contents**
 
-- [Game engine](#user-content-game-engine)
+- [Solver](#user-content-solver)
 	- [Windows 64-bit](#user-content-windows-64-bit)
 	- [Linux 64-bit](#user-content-linux-64-bit)
 		- [Command line](#user-content-command-line)
 		- [Eclipse](#user-content-eclipse)
 - [Streaming server](#user-content-streaming-server)
 
-## Game engine
+## Solver
 
 TL;DR: `git clone https://github.com/mmiermans/solver2048.git && cd solver2048/Solver2048 && make && ./Debug/Solver2048`
 
-That was the short version! What follows are more detailed instructions for building the engine on Windows or Linux. A 64-bit system is required in both cases. The Linux instructions are targeted towards Ubuntu -- because that's what I use -- so substitute apt-get with your favorite package manager if you use something else.
+That was the short version! What follows are more detailed instructions for building the solver on Windows or Linux. A 64-bit system is required in both cases. The Linux instructions are targeted towards Ubuntu -- because that's what I use -- so substitute apt-get with your favorite package manager if you use something else.
 
 ### Windows 64-bit
 
@@ -35,14 +35,14 @@ Compiling the application on the command line requires the following package:
 sudo apt-get install build-essential
 ```
 
-Navigate to the project directory with `cd solver2048/Solver2048`. Simply run `make` or `make release` to generate an executable. The `release` target compiles with the `-O3` optimization option enabled, resulting in significantly better performance. Start the game engine with `./Debug/Solver2048` or `./Release/Solver2048`.
+Navigate to the project directory with `cd solver2048/Solver2048`. Simply run `make` or `make release` to generate an executable. The `release` target compiles with the `-O3` optimization option enabled, resulting in significantly better performance. Start the solver with `./Debug/Solver2048` or `./Release/Solver2048`.
 
 #### Eclipse
 If your preference is to use Eclipse, then open Eclipse and import the project from `solver2048/Solver2048`. There are two possible Build Configurations: `Debug_Solver2048` and `Release_Solver2048`. The former can be debugged more easily and the latter is optimized for performance.
 
 ## Streaming server
 
-The game engine's progress can be [streamed live over the internet](http://32768.eu), and the following steps tell you how to accomplish this:
+The solver's progress can be [streamed live over the internet](http://32768.eu), and the following steps tell you how to accomplish this:
 
 1. Refresh your package index: `sudo apt-get update`
 2. Install LAMP server: `sudo apt-get install lamp-server^ `
@@ -62,7 +62,7 @@ The game engine's progress can be [streamed live over the internet](http://32768
   2. Create symlink: `sudo ln -s ~/solver2048/webclient/public /var/www/html`
   3. Test this by visiting [http://localhost](http://localhost), where you should see an empty 2048 board
 6. Install the MySQL C development libraries: `sudo apt-get install libmysqlclient-dev`
-7. Build the game engine using the make command listed below, with the following adjustments:
+7. Build the solver using the make command listed below, with the following adjustments:
   1. Substitute username and password
   2. If necessary add `-DMYSQL_HOSTNAME="foo"`, `-DMYSQL_DATABASE="bar"` and/or `-DMYSQL_PORT=123` to `DEFS`. The defaults are "localhost", "solver2048" and 0, respectively.
 
