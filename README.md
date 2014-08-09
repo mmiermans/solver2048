@@ -60,11 +60,10 @@ The game engine's progress can [streamed live over the internet](http://32768.eu
 7. Build the game engine using the make command listed below, with the following adjustments:
   1. Substitute username and password
   2. If necessary add `-DMYSQL_HOSTNAME="foo"`, `-DMYSQL_DATABASE="bar"` and/or `-DMYSQL_PORT=123` to `DEFS`. The defaults are "localhost", "solver2048" and 0, respectively.
-  3. Optionally specify the `release` target for better performance
 
   ```
   cd ~/solver2048/Solver2048
-  make ENABLE_MYSQL=1 DEFS='-DMYSQL_USERNAME="solver2048_user" -DMYSQL_PASSWORD="abc123"'
+  make release ENABLE_MYSQL=1 DEFS='-DMYSQL_USERNAME="solver2048_user" -DMYSQL_PASSWORD="abc123"'
   ```
 
 8. Let Apache compress its output:
@@ -80,5 +79,6 @@ The game engine's progress can [streamed live over the internet](http://32768.eu
   </IfModule>
   ```
 
+9. Run `~/solver2048/Solver2048/Release/Solver2048`, go to [http://localhost](http://localhost), sit back, and relax!
 
 
