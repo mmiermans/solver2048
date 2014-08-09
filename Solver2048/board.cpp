@@ -131,7 +131,15 @@ Board BoardLogic::performMove(Board board, Move::MoveEnum move) {
 }
 
 Board BoardLogic::moveLeft(Board board) {
-#if 1
+#if 0
+	// Initial tests indicate no speed penalty for using for loop: compiler is probably unrolling.
+	// TODO: try to request only those rows that are free to move from memory and see if this is faster.
+	Board result = 0;
+	for (int i = 0; i < 4; i++) {
+		result |= (((Board)precomputedMovesLeft[(board >> (i * ROW_BITS)) & MASK_ROW_FIRST]) << (i * ROW_BITS));
+	}
+	return result;
+#elif 1
 	Board result =
 		(((Board)precomputedMovesLeft[(board >> (0 * ROW_BITS)) & MASK_ROW_FIRST]) << (0 * ROW_BITS)) |
 		(((Board)precomputedMovesLeft[(board >> (1 * ROW_BITS)) & MASK_ROW_FIRST]) << (1 * ROW_BITS)) |

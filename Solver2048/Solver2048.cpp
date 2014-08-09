@@ -29,6 +29,16 @@ void askTile(Board& board) {
 	BoardLogic::setTile(board, x, y, tile);
 }
 
+const char* getMoveName(Move::MoveEnum move) {
+	switch (move) {
+		case Move::Left: return "left";
+		case Move::Right: return "right";
+		case Move::Up: return "up";
+		case Move::Down: return "down";
+		default: return NULL;
+	}
+}
+
 void precomputeMoves() {
 	for (int i = 0; i < 1 << 16; i++) {
 		Board iBoard = (Board) i;
@@ -108,7 +118,8 @@ int main(int argc, char* argv[]) {
 				cout << endl;
 
 				cout << "LookAhead: " << e.dfsLookAhead << "\t";
-				cout << "Eval: " << e.costEst << endl;
+				cout << "Eval: " << e.costEst << "\t";
+				cout << "Move: " << getMoveName(bestMove) << endl;
 
 				// Speed stats
 				cout << "Moves/s: "
