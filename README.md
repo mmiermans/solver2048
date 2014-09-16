@@ -1,3 +1,5 @@
+![Highscore](/doc/2048_highscore.png)
+
 Solver2048
 ==========
 
