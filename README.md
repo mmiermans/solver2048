@@ -1,4 +1,4 @@
-![Highscore](/doc/2048_highscore.png)
+<div style="text-align:center"><img alt="highscore" src ="/doc/2048_highscore.png" /></div>
 
 Solver2048
 ==========
