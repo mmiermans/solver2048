@@ -2,6 +2,7 @@ name: Claude PR Review
 on:
   pull_request:
 
+# Cancel in-progress reviews for the same PR when a new push arrives.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
