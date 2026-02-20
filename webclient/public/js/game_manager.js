@@ -461,12 +461,13 @@ GameManager.prototype.getMaxTile = function() {
 
 // Determine whether a tile of value >= 2048 exists
 GameManager.prototype.hasWon = function () {
+  var won = false;
   this.grid.eachCell(function (x, y, tile) {
-    if (tile && tile >= 2048) {
-      return true;
+    if (tile && tile.value >= 2048) {
+      won = true;
     }
   });
-  return false;
+  return won;
 };
 
 GameManager.prototype.positionsEqual = function (first, second) {
