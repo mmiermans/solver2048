@@ -13,7 +13,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      id-token: write # OIDC token for Claude GitHub App auth; proves workflow identity, no repo access granted
 
     steps:
       - uses: actions/checkout@v4
@@ -21,6 +20,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}
           prompt: |
             /review
             Repository: ${{ github.repository }}
