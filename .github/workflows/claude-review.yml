@@ -18,6 +18,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write # OIDC token for Claude GitHub App auth
 
     steps:
       - uses: actions/checkout@v4
@@ -25,10 +26,8 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ github.token }}
           prompt: "/review"
-          # Pre-loads full PR context and shows a progress tracker. Grants extra write tools (Edit, Write,
-          # git push) but github_token with contents: read prevents any changes from reaching the repo.
+          # Pre-loads full PR context and shows a progress tracker.
           track_progress: true
           # Only include comments from trusted team members in Claude's context (prompt injection mitigation).
           include_comments_by_actor: "mmiermans"
