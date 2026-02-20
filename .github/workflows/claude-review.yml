@@ -2,6 +2,10 @@ name: Claude PR Review
 on:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   claude-review:
     name: Claude PR Review
@@ -27,6 +31,8 @@ jobs:
           track_progress: true
           # Only include comments from trusted team members in Claude's context (prompt injection mitigation).
           include_comments_by_actor: "mmiermans"
+          # Update the same comment on each push instead of creating new ones.
+          use_sticky_comment: true
           # Inline code comments, PR comments, reading PR diffs, and git log for commit messages.
           # gh pr view is excluded to prevent Claude from fetching PR comments (prompt injection risk).
           claude_args: |
