@@ -3,9 +3,12 @@
 // Return a JSON error response and exit
 function json_error($message, $code, $mysqli = null) {
   if ($mysqli) {
-    $message .= " (" . $mysqli->errno . ") " . $mysqli->error
+    $message .= " (" . $mysqli->errno . ") " . $mysqli->error;
   }
   http_response_code($code);
+  if ($mysqli) {
+    $mysqli->close();
+  }
   echo json_encode(array(
     "error" => true,
     "message" => $message,
@@ -78,7 +81,7 @@ if (isset($game_id)) {
 }
 
 if (!$mysqli->multi_query($query)) {
-  json_error("Query failed", 200, $mysqli);
+  json_error("Query failed", 500, $mysqli);
 }
 
 // Fetch results
