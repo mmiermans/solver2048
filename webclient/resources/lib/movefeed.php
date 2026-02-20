@@ -1,5 +1,19 @@
 <?php
 
+// Return a JSON error response and exit
+function json_error($message, $code, $mysqli = null) {
+  if ($mysqli) {
+    $message .= " (" . $mysqli->errno . ") " . $mysqli->error
+  }
+  http_response_code($code);
+  echo json_encode(array(
+    "error" => true,
+    "message" => $message,
+    "timestamp" => time(),
+  ));
+  die();
+}
+
 $mysqli = new mysqli(
   $config["db"]["host"],
   $config["db"]["username"],
@@ -7,8 +21,7 @@ $mysqli = new mysqli(
   $config["db"]["dbname"]);
 
 if (mysqli_connect_errno()) {
-    printf("Connect failed: %s\n", mysqli_connect_error());
-    exit();
+    json_error("Connect failed", 500);
 }
 
 // JSON structure
@@ -31,7 +44,7 @@ EOD;
 
   $result = $mysqli->query($statsQuery);
   if (!$result) {
-    echo "CALL failed: (" . $mysqli->errno . ") " . $mysqli->error;
+    json_error("Stats query failed", 500, $mysqli);
   }
   
   while ($row = $result->fetch_row()) {
@@ -65,7 +78,7 @@ if (isset($game_id)) {
 }
 
 if (!$mysqli->multi_query($query)) {
-  echo "CALL failed: (" . $mysqli->errno . ") " . $mysqli->error;
+  json_error("Query failed", 200, $mysqli);
 }
 
 // Fetch results
@@ -97,7 +110,7 @@ do {
 
     $res->free();
   } else if ($mysqli->errno) {
-    echo "store_result failed: (" . $mysqli->errno . ") " . $mysqli->error;
+    json_error("store_result failed", 500, $mysqli);
   }
 } while ($mysqli->more_results() && $mysqli->next_result());
 
