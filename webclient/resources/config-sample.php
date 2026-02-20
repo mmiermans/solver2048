@@ -15,4 +15,4 @@ defined("LIB_PATH")
 set_include_path(get_include_path() . PATH_SEPARATOR . LIB_PATH);
  
 ini_set("error_reporting", "true");
-error_reporting(E_ALL|E_STRCT);
+error_reporting(E_ALL|E_STRICT);
