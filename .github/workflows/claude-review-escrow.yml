@@ -22,10 +22,7 @@ jobs:
             && contains(github.event.pull_request.labels.*.name, 'escrow-demo')
             && github.event.review.user.login != 'github-actions[bot]')
           || (github.event_name == 'issue_comment'
-            && github.event.issue.pull_request != null
-            && contains(github.event.issue.labels.*.name, 'escrow-demo')
-            && contains(github.event.comment.body, '/reveal-ai-review')
-            && github.event.comment.user.login != 'github-actions[bot]') }}
+            && contains(github.event.comment.body, '/reveal-ai-review')) }}
     permissions:
       pull-requests: write
       issues: write
