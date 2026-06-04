@@ -1,20 +1,31 @@
 name: Claude Review Escrow Reveal
-# Experimental: reveals an escrowed (hidden) Claude review only AFTER a human submits their own review.
-# Scoped to PRs labeled 'escrow-demo' so it never fires on unrelated PRs.
-# Triggers on pull_request_review, so it must live on the default branch (master).
+# Experimental: reveals an escrowed (hidden) Claude review after a human engages.
+# Two reveal triggers, both requiring the 'escrow-demo' label so it never fires on unrelated PRs:
+#   - pull_request_review (submitted): auto-reveal once a (non-author) reviewer submits their own review.
+#       NOTE: a PR author's own review does NOT emit this event, which is fine — the goal is to reveal
+#       once a *reviewer* has engaged, not the author.
+#   - issue_comment (created) containing '/reveal-ai-review': explicit on-demand reveal.
+# Both events use the default-branch copy of this workflow, so it must live on master.
 on:
   pull_request_review:
     types: [submitted]
+  issue_comment:
+    types: [created]
 
 permissions: {}
 
 jobs:
   reveal:
     runs-on: ubuntu-latest
-    # Only when: PR is opted into the escrow demo, and the review is from a human (not the bot).
     if: >-
-      ${{ contains(github.event.pull_request.labels.*.name, 'escrow-demo')
-          && github.event.review.user.login != 'github-actions[bot]' }}
+      ${{ (github.event_name == 'pull_request_review'
+            && contains(github.event.pull_request.labels.*.name, 'escrow-demo')
+            && github.event.review.user.login != 'github-actions[bot]')
+          || (github.event_name == 'issue_comment'
+            && github.event.issue.pull_request != null
+            && contains(github.event.issue.labels.*.name, 'escrow-demo')
+            && contains(github.event.comment.body, '/reveal-ai-review')
+            && github.event.comment.user.login != 'github-actions[bot]') }}
     permissions:
       pull-requests: write
       issues: write
@@ -24,11 +35,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           OWNER: ${{ github.repository_owner }}
           NAME: ${{ github.event.repository.name }}
-          PR: ${{ github.event.pull_request.number }}
-          REVIEWER: ${{ github.event.review.user.login }}
+          PR: ${{ github.event.pull_request.number || github.event.issue.number }}
         run: |
           set -euo pipefail
-          echo "Human review submitted by $REVIEWER on PR #$PR — revealing escrowed Claude review."
+          echo "Reveal triggered by ${{ github.event_name }} on PR #$PR"
           ids=$(gh api graphql -f query='query($o:String!,$n:String!,$p:Int!){repository(owner:$o,name:$n){pullRequest(number:$p){comments(last:50){nodes{id isMinimized body}}}}}' \
             -F o="$OWNER" -F n="$NAME" -F p="$PR" \
             --jq '.data.repository.pullRequest.comments.nodes[] | select(.isMinimized and (.body | contains("<!-- claude-escrow -->"))) | .id')
