@@ -7,7 +7,9 @@ window.startApplication = function() {
 
 window.encodeQueryData = function (data) {
    var ret = [];
-   for (var d in data)
+   for (var d in data) {
+      if (!data.hasOwnProperty(d)) continue;
       ret.push(encodeURIComponent(d) + "=" + encodeURIComponent(data[d]));
+   }
    return ret.join("&");
 };
