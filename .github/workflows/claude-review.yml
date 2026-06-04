@@ -1,39 +1,38 @@
 name: Claude PR Review
 on:
   pull_request:
-
-# Cancel in-progress reviews for the same PR when a new push arrives.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
-
 jobs:
   claude-review:
     name: Claude PR Review
     runs-on: ubuntu-latest
-
-    # Prevent running on fork PRs where secrets are unavailable
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
-
     permissions:
       contents: read
       pull-requests: write
-      id-token: write # OIDC token for Claude GitHub App auth
-
+      issues: write
     steps:
       - uses: actions/checkout@v4
-
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: "/review"
-          # Pre-loads full PR context and shows a progress tracker.
-          track_progress: true
-          # Only include comments from trusted team members in Claude's context (prompt injection mitigation).
-          include_comments_by_actor: "mmiermans"
-          # Update the same comment on each push instead of creating new ones.
-          use_sticky_comment: true
-          # Inline code comments, PR comments, reading PR diffs, and git log for commit messages.
-          # gh pr view is excluded to prevent Claude from fetching PR comments (prompt injection risk).
+          github_token: ${{ github.token }}
+          prompt: |
+            You are an automated code reviewer for pull request #${{ github.event.pull_request.number }} in ${{ github.repository }}.
+            1. Read the changes: gh pr diff ${{ github.event.pull_request.number }}
+            2. Review the diff for bugs and improvements. Be concise.
+            3. Post EXACTLY ONE PR comment. Write your review to a file, then: gh pr comment ${{ github.event.pull_request.number }} --body-file <file>
+               The ENTIRE comment body MUST be a single collapsed <details> block with this exact structure:
+
+               <details>
+               <summary>Claude has reviewed this PR - expand after you have formed your own opinion</summary>
+
+               (your full review in markdown here)
+
+               </details>
+
+            RULES: The <summary> line MUST NOT reveal any findings, counts, severities, or verdicts. Post only ONE comment, no inline comments. Do not approve or request changes. No AI attribution / Co-authored-by.
           claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(git log:*)"
+            --allowedTools "Bash(gh pr diff:*),Bash(gh pr comment:*)"
