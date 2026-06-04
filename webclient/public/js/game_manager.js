@@ -4,6 +4,7 @@ function GameManager(size, InputManager, Actuator, bootFeed) {
   this.inputManager   = new InputManager;
 
   this.startTiles     = 2;
+  this.winningValue   = 2048; // Tile value that wins the game
 
   this.inputManager.on("nextGame", this.nextGame.bind(this));
 
@@ -352,7 +353,7 @@ GameManager.prototype.move = function (direction) {
           self.bestScore = Math.max(self.bestScore, self.score);
 
           // The mighty 2048 tile
-          if (merged.value === 2048) self.won = true;
+          if (merged.value > self.winningValue) self.won = true;
         } else {
           self.moveTile(tile, positions.farthest);
         }
@@ -459,14 +460,9 @@ GameManager.prototype.getMaxTile = function() {
   return maxTile;
 }
 
-// Determine whether a tile of value >= 2048 exists
+// Determine whether a winning tile exists on the grid
 GameManager.prototype.hasWon = function () {
-  this.grid.eachCell(function (x, y, tile) {
-    if (tile && tile >= 2048) {
-      return true;
-    }
-  });
-  return false;
+  return this.getMaxTile() >= this.winningValue;
 };
 
 GameManager.prototype.positionsEqual = function (first, second) {
