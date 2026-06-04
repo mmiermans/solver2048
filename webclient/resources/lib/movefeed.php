@@ -38,12 +38,9 @@ EOD;
     $max_tile = (int)$row[0];
     $score = (int)$row[1];
     
-    if (isset($maxTileStats[$max_tile]))
-      $maxTileStats[$max_tile]++;
-    else
-      $maxTileStats[$max_tile] = 1;
+    $maxTileStats[$max_tile] = ($maxTileStats[$max_tile] ?? 0) + 1;
 
-    array_push($scoreStats, $score);
+    $scoreStats[] = $score;
   }
 
   $result->close();
