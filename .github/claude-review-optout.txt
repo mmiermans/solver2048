@@ -1,1 +1,2 @@
 # GitHub handles (one per line) permanently opted out of Claude PR reviews.
+mmiermans
