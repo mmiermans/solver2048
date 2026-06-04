@@ -9,6 +9,7 @@ function GameManager(size, InputManager, Actuator, bootFeed) {
 
   this.requestPeriod  = 15000;
   this.maxMovePeriod = 2000;
+  this.movesPerRequest = 300;
   this.isRequestInProgress = false;
   this.lastRequestTime = Date.now();
   this.gamesAddedToStats = [];
@@ -121,7 +122,8 @@ GameManager.prototype.requestMoves = function () {
   if (this.gameInfo && this.gameInfo.id && this.moveFeedEnd !== undefined) {
     url += "?" + encodeQueryData({
       gameid: this.gameInfo.id,
-      movecount: this.moveFeedEnd
+      movecount: this.moveFeedEnd,
+      maxmoves: this.movesPerRequest
     });
   }
 

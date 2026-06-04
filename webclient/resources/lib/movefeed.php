@@ -81,6 +81,11 @@ do {
         "has_ended" => (int)$rows[0][1]);
     } else if ($resultNum == 1) {
       // moves
+      // Optionally cap the number of moves returned to keep the
+      // response payload small for clients that poll frequently.
+      if (isset($mm)) {
+        $rows = array_slice($rows, 0, $mm);
+      }
       foreach ($rows as $row) {
         // Convert columns
         $move = array();
