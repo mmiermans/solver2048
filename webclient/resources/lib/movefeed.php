@@ -48,9 +48,23 @@ EOD;
 
   $result->close();
 
+  // Compute the average score for every highest tile value so the chart can
+  // show how the typical score grows as players reach bigger tiles.
+  $avgScorePerTile = array();
+  foreach ($maxTileStats as $max_tile => $count) {
+    $avgQuery = "SELECT AVG(score) FROM games WHERE has_ended = 1 AND max_tile = {$max_tile}";
+    $avgResult = $mysqli->query($avgQuery);
+    if ($avgResult) {
+      $avgRow = $avgResult->fetch_row();
+      $avgScorePerTile[$max_tile] = (int)round($avgRow[0]);
+      $avgResult->close();
+    }
+  }
+
   $data["stats"] = array(
     "max_tile" => $maxTileStats,
     "score" => $scoreStats,
+    "avg_score" => $avgScorePerTile,
   );
 
 }
