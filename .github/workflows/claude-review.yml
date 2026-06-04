@@ -1,39 +1,56 @@
 name: Claude PR Review
+# Experiment: Mozilla claude-review action (vendored) + collapsed delivery + author opt-out gate.
+# Uses pull_request (not pull_request_target) so the workflow can be iterated on feature branches;
+# a production rollout would use pull_request_target + author-association gating like Mozilla's.
 on:
   pull_request:
 
-# Cancel in-progress reviews for the same PR when a new push arrives.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
-  claude-review:
-    name: Claude PR Review
+  # Gate: skip the review entirely if the PR author has opted out. The opt-out list is read
+  # from the PR's BASE branch (not the head), so an author cannot bypass it by editing their
+  # own PR. This gives a permanent, per-GitHub-handle opt-out for any PR they open.
+  optout-check:
     runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.check.outputs.skip }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          REPO: ${{ github.repository }}
+        run: |
+          list=$(gh api "repos/$REPO/contents/.github/claude-review-optout.txt?ref=$BASE_REF" \
+            -H "Accept: application/vnd.github.raw" 2>/dev/null || echo "")
+          if printf '%s\n' "$list" | grep -qixF "$AUTHOR"; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Author '$AUTHOR' has opted out of Claude reviews — skipping."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Author '$AUTHOR' is not opted out — review will run."
+          fi
 
-    # Prevent running on fork PRs where secrets are unavailable
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
-
+  review:
+    needs: optout-check
+    if: ${{ needs.optout-check.outputs.skip != 'true' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
-      id-token: write # OIDC token for Claude GitHub App auth
-
+      issues: write
     steps:
+      # Needed so the local (vendored) composite action is available to the runner.
       - uses: actions/checkout@v4
-
-      - uses: anthropics/claude-code-action@v1
+      - uses: ./.github/actions/claude-review
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: "/review"
-          # Pre-loads full PR context and shows a progress tracker.
-          track_progress: true
-          # Only include comments from trusted team members in Claude's context (prompt injection mitigation).
-          include_comments_by_actor: "mmiermans"
-          # Update the same comment on each push instead of creating new ones.
-          use_sticky_comment: true
-          # Inline code comments, PR comments, reading PR diffs, and git log for commit messages.
-          # gh pr view is excluded to prevent Claude from fetching PR comments (prompt injection risk).
-          claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(git log:*)"

@@ -1,0 +1,154 @@
+name: Claude Code Review
+description: Runs Claude Code Review on a pull request.
+branding:
+  icon: eye
+  color: purple
+
+inputs:
+  anthropic_api_key:
+    description: Anthropic API key.
+    required: true
+  model:
+    description: Claude model to use for the review.
+    default: "claude-opus-4-6"
+  fallback_model:
+    description: Fallback Claude model if the primary model is unavailable.
+    default: "claude-sonnet-4-6"
+  budget:
+    description: Maximum budget in USD for the review.
+    default: "5.00"
+  prompt:
+    description: >
+      Additional project-specific review instructions, appended after the base
+      review prompt. Use this to add domain-specific focus areas (e.g., protocol
+      compliance, unsafe FFI rules) relevant to your project.
+    default: ""
+  trusted_actors:
+    description: >
+      Comma-separated GitHub usernames whose PR comments should be included in
+      Claude's context. Defense-in-depth against prompt injection via comments
+      left by non-maintainers on a maintainer's PR. Empty (default) includes
+      every commenter.
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    # Read prompt before PR checkout so it comes from the action version (non-spoofable).
+    - name: Read prompt
+      id: prompt
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        EXTRA_PROMPT: ${{ inputs.prompt }}
+        PR_NUMBER: ${{ github.event.pull_request.number || github.event.number }}
+        REPOSITORY: ${{ github.repository }}
+      run: |
+        if [[ -z "$PR_NUMBER" ]]; then
+          echo "::error::Claude Code Review must run on a pull request event, or another event that provides a pull request number."
+          exit 1
+        fi
+        # Use a random delimiter to prevent injection via the prompt input.
+        DELIM="EOF_$(head -c 8 /dev/urandom | xxd -p)"
+        {
+          echo "content<<$DELIM"
+          # Explicitly anchor Claude to the correct PR so concurrent workflow runs
+          # for different PRs cannot cross-contaminate each other's reviews.
+          echo "You are reviewing pull request #${PR_NUMBER} in repository ${REPOSITORY}."
+          echo "IMPORTANT: Post all review comments exclusively to pull request #${PR_NUMBER}."
+          echo "You may read other pull requests for context, but do not post comments to them."
+          echo ""
+          cat "$ACTION_PATH/prompt.md"
+          if [[ -n "$EXTRA_PROMPT" ]]; then
+            echo ""
+            echo "## Additional Project-Specific Review Guidelines"
+            echo ""
+            echo "$EXTRA_PROMPT"
+          fi
+          echo "$DELIM"
+        } >> "$GITHUB_OUTPUT"
+
+    # With pull_request_target, checkout defaults to the base branch.
+    # Check out from the PR's head repository to handle fork PRs correctly.
+    - name: Checkout PR head
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        ref: ${{ github.event.pull_request.head.sha }}
+        persist-credentials: false
+
+    - name: Restore trusted instruction files from base branch
+      shell: bash
+      env:
+        BASE_REPO: ${{ github.repository }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        FETCH_TOKEN: ${{ github.token }}
+      run: |
+        # Write credentials into the local git config rather than the command line
+        # to avoid exposure in process listings. Unset on exit so the token isn't
+        # left in .git/config if the fetch fails.
+        AUTH_HEADER="$(printf 'x-access-token:%s' "$FETCH_TOKEN" | base64 | tr -d '\n')"
+        git config --local "http.https://github.com/.extraheader" "AUTHORIZATION: basic $AUTH_HEADER"
+        trap 'git config --local --unset "http.https://github.com/.extraheader" 2>/dev/null || true' EXIT
+        git fetch --depth=1 "https://github.com/$BASE_REPO" "$BASE_SHA"
+        # Any of these paths, if added or modified by a PR, can prompt-inject
+        # Claude (e.g. into leaking the API key via a comment). Drop the PR's
+        # copy and restore the base-branch version. If the path doesn't exist
+        # on the base branch the delete stands, preventing a newly added file
+        # from influencing the review.
+        TRUSTED_PATHS=(
+          ".github/copilot-instructions.md"
+          "CLAUDE.md"
+          ".claude"
+          "AGENTS.md"
+          ".cursorrules"
+          ".cursor"
+          ".windsurfrules"
+        )
+        for path in "${TRUSTED_PATHS[@]}"; do
+          rm -rf -- "$path"
+          git checkout FETCH_HEAD -- "$path" 2>/dev/null || true
+        done
+
+    - name: Run Claude Code Review
+      id: claude
+      # TODO: Would like to pin this, but the Mozilla org allowlist requires "anthropics/claude-code-action@v1"
+      uses: anthropics/claude-code-action@v1 # zizmor: ignore[unpinned-uses]
+      with:
+        anthropic_api_key: ${{ inputs.anthropic_api_key }}
+        github_token: ${{ github.token }}
+        # Limit which PR commenters contribute to Claude's context. Empty
+        # includes everyone; set this to your maintainer team for defense-in-depth.
+        include_comments_by_actor: ${{ inputs.trusted_actors }}
+        # EXPERIMENT (collapse delivery): tools tuned to post exactly ONE collapsed
+        # PR comment via `gh pr comment`. The inline-comment and formal-review MCP
+        # write tools are intentionally removed so the only way to post is the single
+        # collapsed comment (anti-anchoring). Read tools are retained for context.
+        claude_args: |
+          --model ${{ inputs.model }}
+          --fallback-model ${{ inputs.fallback_model }}
+          --max-budget-usd ${{ inputs.budget }}
+          --allowedTools "Read(file_path:${{ github.workspace }}/**)" "Glob(path:${{ github.workspace }}/**)" "Grep(path:${{ github.workspace }}/**)"
+          --allowedTools "Bash(gh pr view:*)" "Bash(gh pr diff:*)" "Bash(git log:*)" "Bash(git diff:*)" "Bash(git show:*)" "Bash(gh pr comment:*)"
+        prompt: ${{ steps.prompt.outputs.content }}
+
+    - name: Check review outcome
+      shell: bash
+      env:
+        CONCLUSION: ${{ steps.claude.outputs.conclusion }}
+        LOG: ${{ runner.temp }}/claude-execution-output.json
+      run: |
+        # The action sets conclusion=failure for hard errors (is_error, non-success subtype).
+        if [[ "$CONCLUSION" == "failure" ]]; then
+          echo "Claude execution failed." >&2
+          exit 1
+        fi
+        # Additionally check for permission denials, which don't affect the conclusion.
+        if [[ -f "$LOG" ]]; then
+          RESULT=$(jq 'map(select(.type == "result")) | last // {}' "$LOG" 2>/dev/null)
+          DENIALS=$(jq -r '.permission_denials // [] | length' <<< "$RESULT" 2>/dev/null || echo 0)
+          if [[ "$DENIALS" -gt 0 ]]; then
+            TOOLS=$(jq -r '.permission_denials // [] | .[].tool_name' <<< "$RESULT" 2>/dev/null | sort -u | tr '\n' ',')
+            echo "::warning::Claude had $DENIALS permission denial(s) — review may be incomplete. Denied tools: ${TOOLS%,}"
+          fi
+        fi
