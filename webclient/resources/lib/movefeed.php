@@ -26,6 +26,12 @@ FROM games
 WHERE games.has_ended = 1
 EOD;
 
+  // Optionally restrict the stats to games above a minimum score so the
+  // charts can be filtered to higher-scoring runs.
+  if (isset($_GET["minscore"])) {
+    $statsQuery .= " AND games.score >= " . $_GET["minscore"];
+  }
+
   $maxTileStats = array();
   $scoreStats = array();
 
