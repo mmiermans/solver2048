@@ -9,6 +9,10 @@ if (isset($_GET["gameid"])) {
   $game_id = (int)$_GET["gameid"];
 }
 
+if (isset($_GET["maxmoves"])) {
+  $mm = (int)$_GET["maxmoves"];
+}
+
 if (isset($_GET["stats"]) && $_GET["stats"]) {
   $fetchGameStats = true;
 }
