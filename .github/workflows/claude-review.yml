@@ -1,39 +1,39 @@
 name: Claude PR Review
 on:
   pull_request:
-
-# Cancel in-progress reviews for the same PR when a new push arrives.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
-
 jobs:
   claude-review:
     name: Claude PR Review
     runs-on: ubuntu-latest
-
-    # Prevent running on fork PRs where secrets are unavailable
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
-
     permissions:
       contents: read
       pull-requests: write
-      id-token: write # OIDC token for Claude GitHub App auth
-
+      issues: write
     steps:
       - uses: actions/checkout@v4
-
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: "/review"
-          # Pre-loads full PR context and shows a progress tracker.
-          track_progress: true
-          # Only include comments from trusted team members in Claude's context (prompt injection mitigation).
-          include_comments_by_actor: "mmiermans"
-          # Update the same comment on each push instead of creating new ones.
-          use_sticky_comment: true
-          # Inline code comments, PR comments, reading PR diffs, and git log for commit messages.
-          # gh pr view is excluded to prevent Claude from fetching PR comments (prompt injection risk).
+          github_token: ${{ github.token }}
+          prompt: |
+            You are an automated code reviewer for pull request #${{ github.event.pull_request.number }} in ${{ github.repository }}.
+            Read the changes: gh pr diff ${{ github.event.pull_request.number }}. Review concisely for bugs, security, performance, quality, tests, docs. Do not invent issues.
+            Write the review to a file review.md whose ENTIRE content is one collapsed details block:
+            <details>
+            <summary>🤖 Claude has reviewed this PR — expand after forming your own opinion</summary>
+
+            (your full review in GitHub-flavored Markdown)
+
+            </details>
+            Nothing may appear outside the details block; the summary line must be exactly that text and reveal no findings.
+            STICKY DELIVERY — keep ONE comment across runs. FIRST try to update your previous comment:
+              gh pr comment ${{ github.event.pull_request.number }} --edit-last --body-file review.md
+            If that command fails (because there is no previous comment by you), then create one:
+              gh pr comment ${{ github.event.pull_request.number }} --body-file review.md
+            Post or edit exactly ONE comment. No inline comments, no approve/request-changes, no AI attribution.
           claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(git log:*)"
+            --allowedTools "Bash(gh pr diff:*),Bash(gh pr comment:*)"
