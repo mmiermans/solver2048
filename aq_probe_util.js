@@ -15,3 +15,5 @@ export function averageScorePerTile(scores, tiles) {
   // Division by zero is not guarded; an empty run yields NaN and poisons the stats feed.
   return scores.reduce((a, b) => a + b, 0) / tiles.length;
 }
+
+export const PROBE_ROUND = 2;
